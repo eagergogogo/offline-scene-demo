@@ -767,6 +767,50 @@
         }
         .modal-btn.secondary:hover { background: #eee; box-shadow: none; }
 
+        /* ===== 商家广告位 ===== */
+        .merchant-ad {
+            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+            border: 1px solid #ffcc80; border-radius: 14px;
+            padding: 12px 14px; cursor: pointer;
+            position: relative; overflow: hidden;
+            transition: all 0.2s;
+        }
+        .merchant-ad:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,152,0,0.2); }
+        .merchant-ad::after {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%);
+        }
+        .ad-tag {
+            position: absolute; top: 6px; right: 8px; z-index: 2;
+            font-size: 8px; color: #b0872a; font-weight: 600;
+            background: rgba(255,255,255,0.6); padding: 1px 5px; border-radius: 4px;
+        }
+        .ad-thumb {
+            width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--zx-red), #ff5252);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; position: relative; z-index: 1;
+            box-shadow: 0 2px 8px rgba(230,0,18,0.25);
+        }
+        .ad-text { flex: 1; position: relative; z-index: 1; min-width: 0; }
+        .ad-title {
+            font-size: 14px; font-weight: 900; color: #5a3d00;
+            margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .ad-sub {
+            font-size: 11px; color: #8d6e00; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .ad-cta {
+            flex-shrink: 0; position: relative; z-index: 1;
+            background: var(--zx-red); color: #fff;
+            font-size: 11px; font-weight: 800;
+            padding: 6px 12px; border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(230,0,18,0.3);
+        }
+
         /* Reward List Modal */
         .reward-section { text-align: left; margin-bottom: 14px; }
         .reward-section-title {
@@ -836,6 +880,17 @@
             <span class="tap-icon">📳</span>
             <span>模拟碰卡</span>
         </button>
+
+        <!-- 商家广告位 -->
+        <div class="merchant-ad" onclick="openAd()">
+            <span class="ad-tag">广告</span>
+            <div class="ad-thumb">🍗</div>
+            <div class="ad-text">
+                <div class="ad-title">新品｜藤椒鸡排 首发 9.9 元</div>
+                <div class="ad-sub">到店出示此页，加赠正新柠檬茶一杯</div>
+            </div>
+            <div class="ad-cta">去看看</div>
+        </div>
 
         <!-- 1. 连续打卡 -->
         <div class="card streak-card">
@@ -989,10 +1044,10 @@
             <div class="tmr-name" id="tapModalRewardText"></div>
             <div class="tmr-tip">可在点单小程序核销使用</div>
         </div>
-        <button class="modal-btn" onclick="claimTapReward()">🎁 使用并获得游戏道具</button>
+        <button class="modal-btn" onclick="claimTapReward()">🎁 使用后可获得游戏道具</button>
         <!-- 使用券可得的游戏道具预览 -->
         <div class="modal-game-preview">
-            <div class="mgp-title">🎮 使用后可得游戏道具</div>
+            <div class="mgp-title">🎮 可获得以下道具</div>
             <div class="mgp-grid" id="modalGamePreview"></div>
         </div>
         <button class="modal-btn secondary" onclick="closeModal('tapModal')">稍后再说</button>
@@ -1422,6 +1477,11 @@ function claimTapReward() {
     setTimeout(() => {
         if (!couponUsed) useCoupon();
     }, 600);
+}
+
+// ==================== 商家广告位 ====================
+function openAd() {
+    showToast('🍗 正在跳转商家活动页...');
 }
 
 // ==================== 更多游戏好礼：去完成 → 领取 ====================
