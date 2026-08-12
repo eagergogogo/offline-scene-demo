@@ -145,7 +145,7 @@
 
         /* ===== 1. 连续打卡 ===== */
         .streak-card .card-icon { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
-        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px; }
+        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 30px; }
         .streak-cell {
             aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
@@ -158,7 +158,43 @@
         .streak-cell.today { border-color: var(--zx-red); border-style: dashed; color: var(--zx-red); }
         .streak-cell.milestone { position: relative; }
         .streak-cell.milestone::after {
-            content: '🎁'; position: absolute; top: -8px; right: -6px; font-size: 11px;
+            content: attr(data-gift); position: absolute; top: -8px; right: -6px; font-size: 12px;
+        }
+        /* 券奖励气泡（挂在里程碑格子下方） */
+        .sc-bubble {
+            position: absolute; top: calc(100% + 7px); left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #fff8e1, #ffe082);
+            color: #8d6e00; font-size: 8px; font-weight: 800;
+            padding: 2px 5px; border-radius: 5px; white-space: nowrap;
+            line-height: 1.3; z-index: 2;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .sc-bubble::before {
+            content: ''; position: absolute; top: -4px; left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent; border-bottom-color: #fff8e1;
+        }
+        .streak-cell.done .sc-bubble {
+            background: linear-gradient(135deg, var(--zx-red), #ff5252); color: #fff;
+        }
+        .streak-cell.done .sc-bubble::before { border-bottom-color: var(--zx-red); }
+        /* 重点气泡（D3 免单券 / D7 现金）强化展示 */
+        .sc-bubble.hero {
+            background: linear-gradient(135deg, var(--zx-red), #ff5252);
+            color: #fff; font-size: 8.5px; font-weight: 900;
+            padding: 3px 6px; letter-spacing: -0.2px;
+            box-shadow: 0 2px 8px rgba(230,0,18,0.35);
+            animation: bubblePulse 2s ease-in-out infinite;
+        }
+        .sc-bubble.hero::before { border-bottom-color: var(--zx-red); }
+        @keyframes bubblePulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.08); }
+        }
+        .streak-cell.done .sc-bubble.hero {
+            background: linear-gradient(135deg, #b30000, var(--zx-red));
+            animation: none;
         }
         .streak-info-row { display: flex; justify-content: space-between; align-items: center; }
         .streak-count { font-size: 13px; color: #666; }
@@ -238,6 +274,258 @@
         @keyframes pulseGold { 0%,100%{box-shadow:0 0 0 0 rgba(255,193,7,0.6);} 50%{box-shadow:0 0 0 8px rgba(255,193,7,0);} }
         .game-action.claimed {
             background: #e8f5e9; color: #2e7d32; cursor: default;
+        }
+
+        /* ===== 打卡模块内：模拟碰卡按钮 ===== */
+        .streak-tap-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; margin-top: 12px; padding: 11px;
+            background: linear-gradient(135deg, var(--zx-red), #ff3d3d);
+            color: #fff; font-size: 14px; font-weight: 800;
+            border: none; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 3px 12px rgba(230,0,18,0.25);
+            transition: all 0.2s;
+            position: relative; overflow: hidden; z-index: 1;
+        }
+        .streak-tap-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(230,0,18,0.35); }
+        .streak-tap-btn:active { transform: scale(0.98); }
+        .streak-tap-btn .tap-icon { font-size: 15px; animation: shake 1.6s ease-in-out infinite; }
+        .streak-tap-btn .tap-ripple {
+            position: absolute; top: 50%; left: 50%;
+            width: 40px; height: 40px; border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.18);
+            animation: tapRipple 2s ease-out infinite;
+            pointer-events: none;
+        }
+        @keyframes tapRipple {
+            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.3); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(5); }
+        }
+
+        /* ===== 鸡排券奖励区（打卡模块内） ===== */
+        .coupon-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        }
+        .coupon-ticket {
+            background: #fff; border: 1px solid #ffe0e0; border-radius: 10px;
+            padding: 10px 8px; text-align: center; position: relative;
+            transition: all 0.25s; overflow: hidden;
+        }
+        .coupon-ticket::before {
+            content: '🔒'; position: absolute; top: 5px; right: 5px;
+            font-size: 10px; opacity: 0.4;
+        }
+        .coupon-ticket.unlocked {
+            border-color: var(--zx-red);
+            background: linear-gradient(180deg, #fffdfd, #fff5f5);
+            overflow: visible;
+        }
+        .coupon-ticket.unlocked::before {
+            content: '已解锁'; top: 4px; right: -6px;
+            font-size: 8px; font-weight: 900; letter-spacing: 0.5px;
+            color: var(--zx-red); opacity: 0.9;
+            border: 1.5px solid var(--zx-red); border-radius: 3px;
+            padding: 1px 5px; transform: rotate(-16deg);
+            background: rgba(255,255,255,0.8);
+            animation: stampIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes stampIn {
+            0% { opacity: 0; transform: rotate(-16deg) scale(2.2); }
+            60% { opacity: 0.95; transform: rotate(-16deg) scale(0.92); }
+            100% { opacity: 0.9; transform: rotate(-16deg) scale(1); }
+        }
+        .coupon-ticket .ct-val {
+            font-size: 20px; font-weight: 900; color: #bbb; line-height: 1.1;
+        }
+        .coupon-ticket.unlocked .ct-val { color: var(--zx-red); }
+        .coupon-ticket .ct-val span { font-size: 12px; }
+        .coupon-ticket .ct-name {
+            font-size: 10px; color: #999; font-weight: 600; margin-top: 3px;
+        }
+        .coupon-ticket.unlocked .ct-name { color: #666; }
+        /* ===== 用券购买得游戏权益（对齐美团结构） ===== */
+        .redeem-card .card-icon { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+        .redeem-card { border-color: rgba(230,0,18,0.15); background: linear-gradient(135deg, #fffdfa, #fff8f0); }
+        .redeem-reward-inline {
+            margin-top: 12px; padding: 12px;
+            background: linear-gradient(135deg, #fffdf5, #fff8e1);
+            border: 1px solid #ffe082; border-radius: 12px;
+        }
+        .redeem-reward-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 800; color: #2d2d2d; margin-bottom: 10px;
+        }
+        .redeem-reward-title .icon {
+            width: 24px; height: 24px; border-radius: 6px;
+            background: linear-gradient(135deg, var(--zx-gold), #ff8f00);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+        .redeem-rewards-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .redeem-reward-mini {
+            background: #fff; border: 1px solid #f0f0f0;
+            border-radius: 10px; padding: 10px 6px; text-align: center;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .redeem-reward-mini::before {
+            content: '🔒'; position: absolute; top: 5px; right: 5px;
+            font-size: 10px; opacity: 0.4;
+        }
+        .redeem-reward-mini.unlocked {
+            border-color: var(--zx-gold); overflow: visible;
+            background: linear-gradient(180deg, #fffdf5, #fff8e1);
+        }
+        .redeem-reward-mini.unlocked::before {
+            content: '已解锁'; top: 4px; right: -6px;
+            font-size: 8px; font-weight: 900; letter-spacing: 0.5px;
+            color: #d32f2f; opacity: 0.85;
+            border: 1.5px solid #d32f2f; border-radius: 3px;
+            padding: 1px 5px; transform: rotate(-16deg);
+            background: rgba(255,255,255,0.75);
+            animation: stampIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        .redeem-reward-mini:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .redeem-reward-mini .rr-icon { font-size: 22px; margin-bottom: 4px; }
+        .redeem-reward-mini .rr-name {
+            font-size: 11px; font-weight: 700; color: #2d2d2d; margin-bottom: 2px;
+        }
+        .redeem-reward-mini .rr-bonus {
+            font-size: 10px; color: #ff6b00; font-weight: 700;
+        }
+        .redeem-reward-mini.unlocked .rr-bonus { color: #d32f2f; }
+        .rr-claim-btn {
+            display: none; width: 100%; margin-top: 8px; padding: 5px 0;
+            background: linear-gradient(135deg, var(--red-orange), #ff4757); color: #fff;
+            font-size: 10px; font-weight: 700; border: none; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s; text-align: center; white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(255,107,53,0.3);
+        }
+        .rr-claim-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(255,107,53,0.45); }
+        .redeem-reward-mini.unlocked .rr-claim-btn { display: block; }
+        .rr-claim-btn.claimed {
+            background: #e8f5e9; color: #2e7d32; box-shadow: none; cursor: default;
+        }
+        .rr-claim-btn.claimed:hover { transform: none; box-shadow: none; }
+        /* 已获得的券区块 */
+        .obtained-block {
+            margin-top: 12px; padding: 12px;
+            border: 1px solid #f0f0f0; border-radius: 12px; background: #fafafa;
+        }
+        .obtained-block-title {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #fff; border: 1px solid #ffcdd2;
+            font-size: 10px; font-weight: 600; color: var(--zx-red);
+            padding: 4px 10px; border-radius: 10px; margin-bottom: 10px;
+        }
+        .obtained-block-title::before { content: '🎫'; font-size: 11px; }
+        .obtained-block-title.used { border-color: #a5d6a7; color: #2e7d32; }
+        .obtained-block-title.used::before { content: '✅'; }
+        .obtained-block.just-got { animation: couponGlow 1.2s ease-out; }
+        @keyframes couponGlow {
+            0% { border-color: var(--zx-red); box-shadow: 0 0 0 0 rgba(230,0,18,0.5); background: #fff5f5; }
+            50% { border-color: var(--zx-red); box-shadow: 0 0 0 8px rgba(230,0,18,0); background: #fff5f5; }
+            100% { border-color: #f0f0f0; box-shadow: none; background: #fafafa; }
+        }
+        .use-coupon-btn {
+            width: 100%; padding: 12px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--zx-red), #ff3d3d);
+            color: #fff; font-size: 15px; font-weight: 900; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .use-coupon-btn:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(230,0,18,0.35); }
+        .use-coupon-btn.used {
+            background: linear-gradient(135deg, #4caf50, #66bb6a) !important;
+            cursor: default;
+        }
+        .use-coupon-btn.used:hover { transform: none !important; box-shadow: none !important; }
+        .use-coupon-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .use-coupon-btn:disabled:hover { transform: none; box-shadow: none; }
+        .all-claimed-banner {
+            display: none; margin-top: 10px; padding: 10px;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 1px solid #81c784; border-radius: 8px;
+            text-align: center; font-size: 12px; font-weight: 700; color: #2e7d32;
+        }
+        .all-claimed-banner.show { display: block; animation: bounceIn 0.5s ease; }
+        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.8); } 60% { opacity: 1; transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* ===== 更多游戏好礼（一排多个网格） ===== */
+        .more-games-card .card-icon { background: linear-gradient(135deg, #ede7f6, #d1c4e9); }
+        .more-games-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+        }
+        .more-game-item {
+            background: #fff; border: 1px solid #f0f0f0; border-radius: 10px;
+            padding: 10px 5px; text-align: center;
+            transition: all 0.2s;
+        }
+        .more-game-item:hover {
+            border-color: var(--purple);
+            box-shadow: 0 4px 12px rgba(124,77,255,0.15);
+        }
+        .more-game-item .mg-icon {
+            width: 34px; height: 34px; border-radius: 10px; margin: 0 auto 5px;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+        .more-game-item .mg-name {
+            font-size: 9px; font-weight: 700; color: #2d2d2d;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .more-game-item .mg-task {
+            font-size: 8px; color: #999; font-weight: 600; margin-top: 2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .more-game-item .mg-bonus {
+            font-size: 8px; color: var(--purple); font-weight: 700; margin-top: 2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        /* 游戏任务按钮 */
+        .mg-btn {
+            width: 100%; margin-top: 6px; padding: 4px 0;
+            background: var(--purple); color: #fff;
+            font-size: 9px; font-weight: 700; border: none; border-radius: 5px;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .mg-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(124,77,255,0.35); }
+        .mg-btn.claim {
+            background: linear-gradient(135deg, var(--zx-gold), #ff8f00); color: #5a4500;
+            animation: pulseGold 1.5s ease-in-out infinite;
+        }
+        .mg-btn.claimed {
+            background: #e8f5e9; color: #2e7d32; cursor: default;
+        }
+        .mg-btn.claimed:hover { transform: none; box-shadow: none; }
+        .more-game-item.claimed { border-color: #a5d6a7; background: #fafffa; }
+
+        /* ===== 弹窗内：游戏道具预览 ===== */
+        .modal-game-preview {
+            margin: 12px 0 14px; padding: 14px 12px;
+            background: linear-gradient(135deg, #fffdf5, #fff8e1);
+            border: 2px solid #FFD100; border-radius: 14px;
+        }
+        .mgp-title {
+            font-size: 13px; font-weight: 900; color: #8d6e00;
+            margin-bottom: 10px; text-align: center;
+        }
+        .mgp-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .mgp-item {
+            background: #fff; border: 1px solid #ffe0b2; border-radius: 10px;
+            padding: 10px 4px; text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .mgp-item .mgp-icon { font-size: 24px; margin-bottom: 4px; }
+        .mgp-item .mgp-name {
+            font-size: 10px; font-weight: 700; color: #666;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .mgp-item .mgp-bonus {
+            font-size: 11px; color: #d84315; font-weight: 900; margin-top: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         /* ===== 3. 门店社群 ===== */
@@ -419,21 +707,52 @@
         }
         .tap-modal-title { font-size: 20px; font-weight: 900; color: #1a0533; margin-bottom: 4px; }
         .tap-modal-addr { font-size: 12px; color: #999; margin-bottom: 12px; }
+        /* 打卡数据：弱化为一行小字 */
         .tap-modal-stats {
-            display: flex; gap: 10px; justify-content: center; margin: 14px 0;
+            display: inline-flex; gap: 6px; justify-content: center; align-items: center;
+            margin: 10px 0 14px; padding: 4px 12px;
+            background: #f7f7f7; border-radius: 20px;
+            font-size: 11px; color: #999;
         }
-        .tap-modal-stat {
-            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-            border-radius: 12px; padding: 10px 16px; min-width: 70px;
-        }
-        .tap-modal-stat .val { font-size: 22px; font-weight: 900; color: var(--zx-red); }
-        .tap-modal-stat .lbl { font-size: 10px; color: #999; margin-top: 2px; }
+        .tap-modal-stats .sep { color: #ddd; }
+        .tap-modal-stats strong { color: var(--zx-red); font-weight: 800; font-size: 13px; }
+
+        /* 获得的券：强化为大券面主视觉 */
         .tap-modal-reward {
-            background: linear-gradient(135deg, #f0fff4, #e8f5e9);
-            border-radius: 12px; padding: 10px 14px; margin: 10px 0; font-size: 13px;
-            color: #2e7d32; font-weight: 700; display: none;
+            display: none; position: relative;
+            background: linear-gradient(135deg, var(--zx-red), #ff5252);
+            border-radius: 14px; padding: 16px 14px; margin: 0 0 12px;
+            box-shadow: 0 6px 20px rgba(230,0,18,0.3);
+            overflow: hidden;
         }
-        .tap-modal-reward.show { display: block; }
+        .tap-modal-reward.show { display: block; animation: couponPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+        @keyframes couponPop {
+            0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        /* 券左右半圆缺口 */
+        .tap-modal-reward::before,
+        .tap-modal-reward::after {
+            content: ''; position: absolute; top: 50%;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: #fff; transform: translateY(-50%);
+        }
+        .tap-modal-reward::before { left: -7px; }
+        .tap-modal-reward::after { right: -7px; }
+        .tmr-label {
+            display: inline-block; font-size: 9px; font-weight: 800;
+            color: #fff; background: rgba(0,0,0,0.18);
+            padding: 2px 8px; border-radius: 8px; margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .tmr-name {
+            font-size: 20px; font-weight: 900; color: #fff;
+            line-height: 1.2; margin-bottom: 4px;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .tmr-tip {
+            font-size: 10px; color: rgba(255,255,255,0.85); font-weight: 600;
+        }
         .modal-btn {
             width: 100%; padding: 13px; border-radius: 14px; border: none;
             font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 6px;
@@ -511,6 +830,13 @@
             🎁 我的奖励
         </button>
 
+        <!-- 模拟碰卡（提到最上方） -->
+        <button class="streak-tap-btn" onclick="simulateTap()">
+            <span class="tap-ripple"></span>
+            <span class="tap-icon">📳</span>
+            <span>模拟碰卡</span>
+        </button>
+
         <!-- 1. 连续打卡 -->
         <div class="card streak-card">
             <div class="card-header">
@@ -522,21 +848,83 @@
             </div>
             <div class="streak-grid" id="streakGrid"></div>
             <div class="streak-info-row">
-                <span class="streak-count">已连续 <strong id="streakDays">3</strong> 天</span>
-                <span class="streak-reward-preview">D3/D5/D7 触发鸡排券奖励</span>
+                <span class="streak-count">已连续 <strong id="streakDays">0</strong> 天</span>
+                <span class="streak-reward-preview">D1 / D3 / D7 可得鸡排券</span>
             </div>
         </div>
 
-        <!-- 2. 游戏活动入口 -->
-        <div class="card game-card">
+        <!-- 2. 用鸡排券购买得游戏权益 -->
+        <div class="card redeem-card">
             <div class="card-header">
-                <div class="card-icon">🎮</div>
+                <div class="card-icon">🍗</div>
                 <div>
-                    <div class="card-title">参与游戏活动</div>
+                    <div class="card-title">用鸡排券、得游戏礼包</div>
+                    <div class="card-sub">到店碰卡 → 使用鸡排券下单 → 核销解锁</div>
+                </div>
+            </div>
+
+            <!-- 游戏礼包预览 -->
+            <div class="redeem-reward-inline">
+                <div class="redeem-reward-title">
+                    <span class="icon">🎮</span>
+                    <span id="redeemRewardTitle">点击领取</span>
+                </div>
+                <div class="redeem-rewards-grid" id="redeemRewardsGrid">
+                    <div class="redeem-reward-mini" data-game="王者荣耀" data-bonus="钻石×50">
+                        <div class="rr-icon">⚔️</div>
+                        <div class="rr-name">王者荣耀</div>
+                        <div class="rr-bonus">钻石×50</div>
+                        <button class="rr-claim-btn" onclick="claimRedeemReward(this)">点击领取</button>
+                    </div>
+                    <div class="redeem-reward-mini" data-game="和平精英" data-bonus="服饰币×300">
+                        <div class="rr-icon">🏹</div>
+                        <div class="rr-name">和平精英</div>
+                        <div class="rr-bonus">服饰币×300</div>
+                        <button class="rr-claim-btn" onclick="claimRedeemReward(this)">点击领取</button>
+                    </div>
+                    <div class="redeem-reward-mini" data-game="三角洲行动" data-bonus="补给箱×1">
+                        <div class="rr-icon">🎯</div>
+                        <div class="rr-name">三角洲行动</div>
+                        <div class="rr-bonus">补给箱×1</div>
+                        <button class="rr-claim-btn" onclick="claimRedeemReward(this)">点击领取</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已获得的鸡排券 -->
+            <div class="obtained-block" id="obtainedBlock">
+                <div class="obtained-block-title" id="obtainedTitle">已经获得的鸡排券</div>
+                <div class="coupon-grid" id="obtainedCouponGrid" style="grid-template-columns:repeat(3,1fr); margin-bottom:12px;">
+                    <div class="coupon-ticket" id="couponFirst">
+                        <div class="ct-val">8<span>折</span></div>
+                        <div class="ct-name">折扣券</div>
+                    </div>
+                    <div class="coupon-ticket" id="couponStreak">
+                        <div class="ct-val">免单</div>
+                        <div class="ct-name">免单券</div>
+                    </div>
+                    <div class="coupon-ticket" id="couponPay">
+                        <div class="ct-val">抵扣</div>
+                        <div class="ct-name">支付抵扣券</div>
+                    </div>
+                </div>
+                <button class="use-coupon-btn" id="useCouponBtn" onclick="useCoupon()">
+                    前往点单小程序使用
+                </button>
+                <div class="all-claimed-banner" id="allClaimedBanner">🎉 太棒了！3 款游戏奖励已全部领取</div>
+            </div>
+        </div>
+
+        <!-- 3. 更多游戏好礼 -->
+        <div class="card more-games-card">
+            <div class="card-header">
+                <div class="card-icon">🎁</div>
+                <div>
+                    <div class="card-title">更多游戏好礼</div>
                     <div class="card-sub">完成任务领取游戏奖励</div>
                 </div>
             </div>
-            <div class="game-list" id="gameList"></div>
+            <div class="more-games-grid" id="moreGamesGrid"></div>
         </div>
 
         <!-- 3. 门店社群 -->
@@ -563,24 +951,21 @@
             <div class="card-title" style="margin-bottom:10px;">📋 活动规则</div>
             <div class="rule-item">
                 <div class="rule-dot">1</div>
-                <div class="rule-text">到 <strong>正新鸡排</strong> 合作门店 <strong>NFC 碰卡</strong>，即可解锁 <strong>连续签到 + 游戏活动 + 门店社群</strong> 等全部权益</div>
+                <div class="rule-text">到 <strong>正新鸡排</strong> 合作门店 <strong>NFC 碰卡</strong>，首次即得 <strong>8 折券</strong>，连续碰卡 <strong>3 天</strong> 得 <strong>免单券</strong></div>
             </div>
             <div class="rule-item">
                 <div class="rule-dot">2</div>
-                <div class="rule-text">连续打卡 <strong>中断则清零</strong>，D3/D5/D7 天触发额外<strong>鸡排券/游戏周边</strong>奖励</div>
+                <div class="rule-text">连续打卡 <strong>中断则清零</strong>，鸡排券可在门店直接核销使用</div>
             </div>
             <div class="rule-item">
                 <div class="rule-dot">3</div>
-                <div class="rule-text">游戏活动奖励<strong>碰卡后立即解锁</strong>，到王者人生 App 内领取</div>
+                <div class="rule-text">使用鸡排券 <strong>完成购买核销</strong> 后，即可解锁 <strong>3 款游戏权益</strong></div>
             </div>
             <div class="rule-item">
                 <div class="rule-dot">4</div>
                 <div class="rule-text">每店仅可碰卡打卡<strong>1次/天</strong>，奖励实时发放至账户</div>
             </div>
         </div>
-
-        <!-- 模拟碰卡 -->
-        <button class="simulate-btn" onclick="simulateTap()">📳 模拟 NFC 碰卡（随机正新鸡排门店）</button>
     </div>
 </div>
 
@@ -594,19 +979,22 @@
         <div class="tap-modal-title" id="tapModalTitle">碰卡成功！</div>
         <div class="tap-modal-addr" id="tapModalAddr"></div>
         <div class="tap-modal-stats">
-            <div class="tap-modal-stat">
-                <div class="val" id="tapModalStreak">3</div>
-                <div class="lbl">连续打卡</div>
-            </div>
-            <div class="tap-modal-stat">
-                <div class="val">+1</div>
-                <div class="lbl">今日打卡</div>
-            </div>
+            <span>连续打卡 <strong id="tapModalStreak">3</strong> 天</span>
+            <span class="sep">·</span>
+            <span>今日 <strong>+1</strong></span>
         </div>
+        <!-- 获得的券（大券面主视觉） -->
         <div class="tap-modal-reward" id="tapModalReward">
-            <span id="tapModalRewardText"></span>
+            <div class="tmr-label">🎁 恭喜获得</div>
+            <div class="tmr-name" id="tapModalRewardText"></div>
+            <div class="tmr-tip">可在点单小程序核销使用</div>
         </div>
-        <button class="modal-btn" onclick="claimTapReward()">🎉 太好了，确认领取</button>
+        <button class="modal-btn" onclick="claimTapReward()">🎁 使用并获得游戏道具</button>
+        <!-- 使用券可得的游戏道具预览 -->
+        <div class="modal-game-preview">
+            <div class="mgp-title">🎮 使用后可得游戏道具</div>
+            <div class="mgp-grid" id="modalGamePreview"></div>
+        </div>
         <button class="modal-btn secondary" onclick="closeModal('tapModal')">稍后再说</button>
     </div>
 </div>
@@ -662,30 +1050,41 @@ const STORES = [
       text: '正' }
 ];
 
-// 3 款游戏活动（精简示例）
-const GAME_ACTIVITIES = [
-    { id: 'g1', name: '王者荣耀', icon: '⚔️', cls: 'wzry',
-      task: '完成 1 局 5v5 排位赛',
-      desc: '英雄碎片×5 + 皮肤体验卡×1' },
-    { id: 'g2', name: '和平精英', icon: '🏹', cls: 'hpjy',
-      task: '完成 1 局经典模式吃鸡',
-      desc: '战令经验×200 + 服饰币×300' },
-    { id: 'g4', name: '三角洲行动', icon: '🎯', cls: 'delta',
-      task: '完成 1 局烽火地带',
-      desc: '战备补给箱×1 + 经验卡×3日' }
+// 更多游戏好礼（一排 4 个网格，每款带任务）
+const MORE_GAMES = [
+    { id: 'g1', name: '王者荣耀',   icon: '⚔️', task: '登录游戏', bonus: '碎片×5',   bg: 'linear-gradient(135deg,#fff3e0,#ffe0b2)' },
+    { id: 'g2', name: '和平精英',   icon: '🏹', task: '完成1局对战', bonus: '经验×200', bg: 'linear-gradient(135deg,#e3f2fd,#bbdefb)' },
+    { id: 'g3', name: '三角洲行动', icon: '🎯', task: '登录游戏', bonus: '补给×1',   bg: 'linear-gradient(135deg,#e8f5e9,#c8e6c9)' },
+    { id: 'g4', name: '英雄联盟',   icon: '🛡️', task: '完成1局排位', bonus: '特权×100', bg: 'linear-gradient(135deg,#ede7f6,#d1c4e9)' },
+    { id: 'g5', name: '无畏契约',   icon: '🔫', task: '登录游戏', bonus: '枪皮×4',   bg: 'linear-gradient(135deg,#fce4ec,#f8bbd0)' },
+    { id: 'g6', name: 'CF 手游',    icon: '💥', task: '完成1局爆破', bonus: '钻石×88',  bg: 'linear-gradient(135deg,#fff8e1,#ffecb3)' },
+    { id: 'g7', name: 'QQ 飞车',    icon: '🏎️', task: '完成1局竞速', bonus: '点券×500', bg: 'linear-gradient(135deg,#e0f7fa,#b2ebf2)' },
+    { id: 'g8', name: '金铲铲之战', icon: '♟️', task: '登录游戏', bonus: '棋子×3',   bg: 'linear-gradient(135deg,#f3e5f5,#e1bee7)' }
 ];
 // 排行榜（已移除卡片展示）
 const LEADERBOARD = [];
 
 let currentStoreIndex = 0;
-let streakDays = 3; // 当前连续打卡天数
+let streakDays = 0; // 当前连续打卡天数（从 0 开始，需碰卡累积）
 let pendingMilestoneReward = null; // 待领取的里程碑奖励
 let joinedStores = { 'zx1': true }; // 已加的门店社群
 
+// 鸡排券状态
+let couponFirstGot = false;   // 首次碰卡 8 折券
+let couponStreakGot = false;  // 连续 3 天免单券
+let couponPayGot = false;     // 连续 7 天支付抵扣券
+const STREAK_TARGET = 3;      // 免单券所需连续天数
+const PAY_TARGET = 7;         // 支付抵扣券所需连续天数
+
+// 用券购买 → 游戏权益状态
+let couponUsed = false;
+let redeemClaimedCount = 0;
+const TOTAL_REDEEM = 3;
+
 const STREAK_MILESTONES = {
-    3: { name: '正新鸡排 5 元代金券', icon: '🎫' },
-    5: { name: '正新鸡排 招牌大鸡排一份', icon: '🍗' },
-    7: { name: '正新鸡排 全家桶 + 游戏周边', icon: '🎁' }
+    1: { name: '正新鸡排 8 折券', short: '8折券',     icon: '🎫', hero: false },
+    3: { name: '正新鸡排免单券',  short: '可得免单券', icon: '🎫', hero: true },
+    7: { name: '5 元现金',        short: '可得5元现金', icon: '💰', hero: true }
 };
 
 let claimedRewards = []; // { type, name, icon, claimedAt, day }
@@ -732,7 +1131,8 @@ function switchStore(idx) {
 function renderAll() {
     renderStreakGrid();
     renderCurrentStore();
-    renderGameList();
+    renderCoupons();
+    renderMoreGames();
     updateRewardBadge();
 }
 function renderCurrentStore() {
@@ -760,60 +1160,53 @@ function renderStreakGrid() {
         let cls = '';
         if (i < streakDays) cls = 'done';
         else if (i === streakDays) cls = 'today';
-        if (day === 3 || day === 5 || day === 7) cls += ' milestone';
-        html += `<div class="streak-cell ${cls}">
+        const m = STREAK_MILESTONES[day];
+        if (m && m.hero) cls += ' milestone';
+        html += `<div class="streak-cell ${cls}"${m && m.hero ? ` data-gift="${m.icon}"` : ''}>
             <span>D${day}</span>
             <span style="font-size:16px;">${i < streakDays ? '✓' : day}</span>
+            ${m ? `<span class="sc-bubble ${m.hero ? 'hero' : ''}">${m.short}</span>` : ''}
         </div>`;
     }
     document.getElementById('streakGrid').innerHTML = html;
     document.getElementById('streakDays').textContent = streakDays;
 }
-function renderGameList() {
-    document.getElementById('gameList').innerHTML = GAME_ACTIVITIES.map(g => {
-        const isClaimed = !!gameClaimed[g.id];
-        const isDone = !!gameTaskDone[g.id] || isClaimed; // 已领取也算任务完成
-        const cls = isClaimed ? 'claimed' : (isDone ? 'done' : '');
-        // 状态 tag
-        let tagHTML = '';
-        if (isClaimed) {
-            tagHTML = '<span class="game-tag claimed">已领取</span>';
-        } else if (isDone) {
-            tagHTML = '<span class="game-tag done">待领取</span>';
+
+// 渲染鸡排券解锁状态
+function renderCoupons() {
+    document.getElementById('couponFirst').classList.toggle('unlocked', couponFirstGot);
+    document.getElementById('couponStreak').classList.toggle('unlocked', couponStreakGot);
+    document.getElementById('couponPay').classList.toggle('unlocked', couponPayGot);
+    // 已获得券区块：未获得任何券时禁用按钮
+    const btn = document.getElementById('useCouponBtn');
+    if (!couponUsed) {
+        const hasCoupon = couponFirstGot || couponStreakGot || couponPayGot;
+        btn.disabled = !hasCoupon;
+        btn.textContent = hasCoupon ? '前往点单小程序使用' : '碰卡得券后可使用';
+    }
+}
+
+// 渲染更多游戏好礼（一排 4 个，带任务 + 按钮）
+function renderMoreGames() {
+    document.getElementById('moreGamesGrid').innerHTML = MORE_GAMES.map(g => {
+        const done = !!gameTaskDone[g.id];
+        const claimed = !!gameClaimed[g.id];
+        let btnHTML;
+        if (claimed) {
+            btnHTML = `<button class="mg-btn claimed" disabled>✓ 已领取</button>`;
+        } else if (done) {
+            btnHTML = `<button class="mg-btn claim" onclick="claimMoreGame('${g.id}')">领取</button>`;
         } else {
-            tagHTML = '<span class="game-tag">未完成</span>';
-        }
-        // 任务行
-        const taskHTML = isClaimed
-            ? `<div class="game-task done"><span class="game-task-icon">✅</span><span><span class="game-task-label">任务</span>${g.task}（已完成）</span></div>`
-            : (isDone
-                ? `<div class="game-task done"><span class="game-task-icon">✅</span><span><span class="game-task-label">任务</span>${g.task}</span></div>`
-                : `<div class="game-task"><span class="game-task-icon">📋</span><span><span class="game-task-label">任务</span>${g.task}</span></div>`);
-        // 奖励行
-        const rewardHTML = isClaimed
-            ? `<div class="game-reward claimed"><span class="game-reward-icon">🎁</span><span><span class="game-reward-label">奖励</span>${g.desc}</span></div>`
-            : `<div class="game-reward"><span class="game-reward-icon">🎁</span><span><span class="game-reward-label">奖励</span>${g.desc}</span></div>`;
-        // 操作按钮
-        let actionHTML = '';
-        if (isClaimed) {
-            actionHTML = `<button class="game-action claimed" disabled>✓ 已领取</button>`;
-        } else if (isDone) {
-            actionHTML = `<button class="game-action claim" onclick="claimGameReward('${g.id}')">🎁 立即领取奖励</button>`;
-        } else {
-            actionHTML = `<button class="game-action task" onclick="completeGameTask('${g.id}')">📋 去完成任务</button>`;
+            btnHTML = `<button class="mg-btn" onclick="goMoreGameTask('${g.id}')">去完成</button>`;
         }
         return `
-            <div class="game-item ${cls}">
-                <div class="game-item-row">
-                    <div class="game-icon ${g.cls}">${g.icon}</div>
-                    <div class="game-info">
-                        <span class="game-name">${g.name}</span>${tagHTML}
-                    </div>
-                </div>
-                ${taskHTML}
-                ${rewardHTML}
-                ${actionHTML}
-            </div>`;
+        <div class="more-game-item ${claimed ? 'claimed' : ''}">
+            <div class="mg-icon" style="background:${g.bg};">${g.icon}</div>
+            <div class="mg-name">${g.name}</div>
+            <div class="mg-task">${g.task}</div>
+            <div class="mg-bonus">${g.bonus}</div>
+            ${btnHTML}
+        </div>`;
     }).join('');
 }
 function updateRewardBadge() {
@@ -831,15 +1224,15 @@ function openMyRewards() {
 
     // 连续打卡奖励
     let streakHTML = '';
-    for (let d = 3; d <= 7; d += 2) {
+    [1, STREAK_TARGET, PAY_TARGET].forEach(d => {
         const m = STREAK_MILESTONES[d];
         const claimed = claimedRewards.find(r => r.type === 'streak' && r.day === d);
-        const isReached = streakDays >= d;
+        const isReached = d === 1 ? couponFirstGot : (d === STREAK_TARGET ? couponStreakGot : couponPayGot);
         if (claimed) {
             streakHTML += `<div class="reward-item claimed">
                 <div class="reward-item-icon claimed">${m.icon}</div>
                 <div class="reward-item-info">
-                    <div class="reward-item-name">D${d} 里程碑 · ${m.name}</div>
+                    <div class="reward-item-name">${m.name}</div>
                     <div class="reward-item-meta">领取时间：${claimed.claimedAt}</div>
                 </div>
                 <span class="reward-item-status claimed">已领取 ✓</span>
@@ -848,43 +1241,52 @@ function openMyRewards() {
             streakHTML += `<div class="reward-item pending" onclick="claimSpecificMilestone(${d}); closeModal('rewardsModal');">
                 <div class="reward-item-icon pending">${m.icon}</div>
                 <div class="reward-item-info">
-                    <div class="reward-item-name">D${d} 里程碑 · ${m.name}</div>
+                    <div class="reward-item-name">${m.name}</div>
                     <div class="reward-item-meta">已达成，点击立即领取</div>
                 </div>
                 <span class="reward-item-status pending">待领取</span>
+            </div>`;
+        } else if (isReached) {
+            streakHTML += `<div class="reward-item claimed">
+                <div class="reward-item-icon claimed">${m.icon}</div>
+                <div class="reward-item-info">
+                    <div class="reward-item-name">${m.name}</div>
+                    <div class="reward-item-meta">已发放至账户，可到店核销</div>
+                </div>
+                <span class="reward-item-status claimed">已获得 ✓</span>
             </div>`;
         } else {
             streakHTML += `<div class="reward-item" style="opacity:0.5;">
                 <div class="reward-item-icon" style="background:#f5f5f5;">${m.icon}</div>
                 <div class="reward-item-info">
-                    <div class="reward-item-name">D${d} 里程碑 · ${m.name}</div>
-                    <div class="reward-item-meta">${isReached ? '已过期' : `还需打卡 ${d - streakDays} 天`}</div>
+                    <div class="reward-item-name">${m.name}</div>
+                    <div class="reward-item-meta">${d === 1 ? '首次碰卡即得' : `还需连续打卡 ${Math.max(0, d - streakDays)} 天`}</div>
                 </div>
             </div>`;
         }
-    }
+    });
     document.getElementById('streakRewardsList').innerHTML = streakHTML;
 
     // 游戏权利
     let gameHTML = '';
-    GAME_ACTIVITIES.forEach(g => {
-        if (gameClaimed[g.id]) {
+    MORE_GAMES.slice(0, TOTAL_REDEEM).forEach(g => {
+        if (gameClaimed[g.name]) {
             gameHTML += `<div class="reward-item claimed">
                 <div class="reward-item-icon claimed" style="background:linear-gradient(135deg,#ede7f6,#d1c4e9);">${g.icon}</div>
                 <div class="reward-item-info">
-                    <div class="reward-item-name">${g.name} · ${g.desc}</div>
-                    <div class="reward-item-meta">碰卡即得，已发放至账户</div>
+                    <div class="reward-item-name">${g.name} · ${g.bonus}</div>
+                    <div class="reward-item-meta">用券核销后已发放至账户</div>
                 </div>
                 <span class="reward-item-status claimed">已领取 ✓</span>
             </div>`;
         } else {
-            gameHTML += `<div class="reward-item pending" onclick="claimGameReward('${g.id}'); closeModal('rewardsModal');">
-                <div class="reward-item-icon pending" style="background:linear-gradient(135deg,#ede7f6,#d1c4e9);">${g.icon}</div>
+            gameHTML += `<div class="reward-item" style="opacity:${couponUsed ? 1 : 0.5};">
+                <div class="reward-item-icon ${couponUsed ? 'pending' : ''}" style="background:linear-gradient(135deg,#ede7f6,#d1c4e9);">${g.icon}</div>
                 <div class="reward-item-info">
-                    <div class="reward-item-name">${g.name} · ${g.desc}</div>
-                    <div class="reward-item-meta">点击立即领取</div>
+                    <div class="reward-item-name">${g.name} · ${g.bonus}</div>
+                    <div class="reward-item-meta">${couponUsed ? '已解锁，回页面点击领取' : '需先使用鸡排券完成购买'}</div>
                 </div>
-                <span class="reward-item-status pending">待领取</span>
+                ${couponUsed ? '<span class="reward-item-status pending">待领取</span>' : ''}
             </div>`;
         }
     });
@@ -936,28 +1338,63 @@ function simulateTap() {
     document.getElementById('tapModalAddr').textContent = store.name + ' · ' + store.addr;
 
     // 增加打卡
-    if (streakDays < 7) {
-        streakDays++;
-        const milestone = STREAK_MILESTONES[streakDays];
-        if (milestone) {
-            pendingMilestoneReward = { day: streakDays, ...milestone };
-        }
+    const isFirstTap = streakDays === 0;
+    if (streakDays < 7) streakDays++;
+
+    // 发券判定
+    let gotCoupon = null;
+    if (isFirstTap && !couponFirstGot) {
+        couponFirstGot = true;
+        gotCoupon = { day: 1, ...STREAK_MILESTONES[1] };
     }
+    if (streakDays >= STREAK_TARGET && !couponStreakGot) {
+        couponStreakGot = true;
+        gotCoupon = { day: STREAK_TARGET, ...STREAK_MILESTONES[STREAK_TARGET] };
+    }
+    if (streakDays >= PAY_TARGET && !couponPayGot) {
+        couponPayGot = true;
+        gotCoupon = { day: PAY_TARGET, ...STREAK_MILESTONES[PAY_TARGET] };
+    }
+    if (gotCoupon) pendingMilestoneReward = gotCoupon;
 
     document.getElementById('tapModalStreak').textContent = streakDays;
 
-    // 里程碑奖励提示
+    // 券奖励提示
     const rewardDiv = document.getElementById('tapModalReward');
     const rewardText = document.getElementById('tapModalRewardText');
     if (pendingMilestoneReward) {
         rewardDiv.classList.add('show');
-        rewardText.textContent = `🎁 D${pendingMilestoneReward.day} 里程碑达成！${pendingMilestoneReward.icon} ${pendingMilestoneReward.name} 待领取`;
+        rewardText.textContent = pendingMilestoneReward.name;
     } else {
         rewardDiv.classList.remove('show');
     }
 
     renderAll();
+    renderModalGamePreview();
     openModal('tapModal');
+
+    // 券区高亮反馈
+    if (gotCoupon) {
+        const block = document.getElementById('obtainedBlock');
+        block.classList.remove('just-got');
+        void block.offsetWidth;
+        block.classList.add('just-got');
+    }
+}
+
+// 渲染弹窗内的游戏道具预览
+function renderModalGamePreview() {
+    const items = [
+        { icon: '⚔️', name: '王者荣耀',   bonus: '钻石×50' },
+        { icon: '🏹', name: '和平精英',   bonus: '服饰币×300' },
+        { icon: '🎯', name: '三角洲行动', bonus: '补给箱×1' }
+    ];
+    document.getElementById('modalGamePreview').innerHTML = items.map(g => `
+        <div class="mgp-item">
+            <div class="mgp-icon">${g.icon}</div>
+            <div class="mgp-name">${g.name}</div>
+            <div class="mgp-bonus">${g.bonus}</div>
+        </div>`).join('');
 }
 
 function claimTapReward() {
@@ -980,28 +1417,79 @@ function claimTapReward() {
 
     closeModal('tapModal');
     renderAll();
+
+    // 按钮语义为「使用并获得游戏道具」：直接串起用券核销 → 解锁游戏权益
+    setTimeout(() => {
+        if (!couponUsed) useCoupon();
+    }, 600);
 }
 
-// ==================== 游戏活动 ====================
-// 点击「去完成任务」：模拟用户去玩游戏完成任务
-function completeGameTask(gameId) {
-    if (gameTaskDone[gameId] || gameClaimed[gameId]) return;
-    gameTaskDone[gameId] = true;
-    const g = GAME_ACTIVITIES.find(x => x.id === gameId);
-    showToast(`✅ ${g.name} 任务已完成，点击下方按钮领取奖励`);
-    renderGameList();
+// ==================== 更多游戏好礼：去完成 → 领取 ====================
+function goMoreGameTask(gameId) {
+    const g = MORE_GAMES.find(x => x.id === gameId);
+    if (!g || gameTaskDone[gameId]) return;
+    showToast(`🎮 正在跳转 ${g.name}...`);
+    setTimeout(() => {
+        gameTaskDone[gameId] = true;
+        renderMoreGames();
+        showToast(`✅ ${g.task}已完成，回来领取 ${g.bonus}`);
+    }, 1500);
 }
 
-// 点击「立即领取奖励」：写入已领取，发放奖励
-function claimGameReward(gameId) {
-    const g = GAME_ACTIVITIES.find(x => x.id === gameId);
-    if (!g) return;
-    // 容错：未完成任务也能领
-    if (!gameTaskDone[gameId]) gameTaskDone[gameId] = true;
-    if (gameClaimed[gameId]) return;
+function claimMoreGame(gameId) {
+    const g = MORE_GAMES.find(x => x.id === gameId);
+    if (!g || gameClaimed[gameId]) return;
     gameClaimed[gameId] = true;
-    showToast(`🎁 ${g.name} 奖励已发放：${g.desc}`);
-    renderAll();
+    showToast(`🎁 ${g.name} 奖励已到账：${g.bonus}`);
+    renderMoreGames();
+    updateRewardBadge();
+}
+
+// ==================== 用券购买 → 解锁游戏权益 ====================
+function useCoupon() {
+    if (couponUsed) return;
+    if (!couponFirstGot && !couponStreakGot && !couponPayGot) {
+        showToast('📳 请先碰卡获得鸡排券');
+        return;
+    }
+    const btn = document.getElementById('useCouponBtn');
+    btn.disabled = true;
+    btn.textContent = '🍗 核销中...';
+    showToast('🍗 正在跳转门店核销...');
+    setTimeout(() => {
+        couponUsed = true;
+        btn.classList.add('used');
+        btn.innerHTML = '✅ 已使用完成';
+        // 标题切换 + 解锁游戏卡
+        const title = document.getElementById('obtainedTitle');
+        title.classList.add('used');
+        title.textContent = '已核销 · 0/' + TOTAL_REDEEM + ' 已领取';
+        document.getElementById('redeemRewardsGrid')
+            .querySelectorAll('.redeem-reward-mini')
+            .forEach(card => card.classList.add('unlocked'));
+        showToast('🎁 券已核销，点击下方游戏领取奖励');
+    }, 1500);
+}
+
+function claimRedeemReward(btn) {
+    if (btn.classList.contains('claimed')) return;
+    const card = btn.closest('.redeem-reward-mini');
+    const game = card.dataset.game;
+    const bonus = card.dataset.bonus;
+    btn.classList.add('claimed');
+    btn.innerHTML = '✓ 已领取';
+    redeemClaimedCount++;
+    gameClaimed[game] = true;
+    document.getElementById('obtainedTitle').textContent =
+        '已核销 · ' + redeemClaimedCount + '/' + TOTAL_REDEEM + ' 已领取';
+    showToast(`✅ ${game} · ${bonus} 已到账`);
+    updateRewardBadge();
+    if (redeemClaimedCount === TOTAL_REDEEM) {
+        setTimeout(() => {
+            document.getElementById('allClaimedBanner').classList.add('show');
+            showToast('🎉 全部游戏奖励已收入囊中');
+        }, 400);
+    }
 }
 
 // ==================== 社群 ====================
