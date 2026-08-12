@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美团网费 · 网吧碰卡 Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --deep-purple: #1a0533;
+            --gold: #ffd700;
+            --orange: #ff8c00;
+            --deep-orange: #e67e00;
+            --meituan-yellow: #FFD100;
+            --meituan-yellow-dark: #e6bc00;
+            --cafe-cyan: #00e5ff;
+            --community-blue: #2196f3;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #ffffff;
+            color: #2d2d2d;
+            min-height: 100vh; display: flex; justify-content: center; padding: 20px;
+        }
+        .phone {
+            width: 390px; min-height: 750px; background: #f8f8f8;
+            border-radius: 32px; overflow: hidden; border: 3px solid #ddd;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            display: flex; flex-direction: column;
+        }
+        .phone-header {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .back-btn {
+            color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; cursor: pointer;
+            border: none; background: none; text-decoration: none; padding: 4px 8px;
+            border-radius: 8px; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.15); }
+        .phone-title { font-size: 16px; font-weight: 700; color: #fff; flex: 1; }
+        .header-badge {
+            font-size: 10px; background: rgba(255,209,0,0.2); color: var(--meituan-yellow);
+            padding: 4px 8px; border-radius: 10px; font-weight: 700;
+        }
+        .phone-body {
+            flex: 1; padding: 16px; overflow-y: auto; display: flex;
+            flex-direction: column; gap: 14px; position: relative;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.85) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(255,209,0,0.4); } 50% { box-shadow: 0 0 0 12px rgba(255,209,0,0); } }
+        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.8); } 60% { opacity: 1; transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes stampIn {
+            0% { opacity: 0; transform: rotate(-16deg) scale(2.2); }
+            60% { opacity: 0.9; transform: rotate(-16deg) scale(0.92); }
+            100% { opacity: 0.85; transform: rotate(-16deg) scale(1); }
+        }
+        @keyframes scanLine {
+            0% { top: -2px; opacity: 1; }
+            80% { top: 100%; opacity: 0.6; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ===== 门店展示区 ===== */
+        .store-display-card {
+            background: #fff; border-radius: 16px; padding: 16px;
+            border: 1px solid #eee; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            position: relative; overflow: hidden;
+        }
+        .store-display-card::after {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 120px; height: 120px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,209,0,0.08) 0%, transparent 70%);
+        }
+        .store-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #f5f5f7; color: #666;
+            font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+            padding: 4px 10px; border-radius: 10px;
+            margin-bottom: 14px;
+            position: relative; z-index: 1;
+        }
+        .store-badge .loc-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: #4caf50; flex-shrink: 0;
+            box-shadow: 0 0 0 2px rgba(76,175,80,0.2);
+        }
+        .store-display-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            background: linear-gradient(135deg, #1a0533, #4a2a8a);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px; font-size: 28px; position: relative; z-index: 1;
+        }
+        .store-display-name {
+            font-size: 17px; font-weight: 900; color: #1a0533;
+            position: relative; z-index: 1;
+        }
+        .store-display-addr {
+            font-size: 11px; color: #999; margin: 4px 0 10px;
+            position: relative; z-index: 1;
+        }
+        .store-display-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: linear-gradient(135deg, #fff8e1, #ffe082);
+            color: #b8860b; font-size: 11px; font-weight: 700;
+            padding: 5px 12px; border-radius: 12px;
+            position: relative; z-index: 1;
+        }
+        .store-display-tag::before {
+            content: '📳'; font-size: 12px;
+        }
+        /* 门店内模拟碰卡按钮 */
+        .store-tap-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; margin-top: 14px; padding: 11px;
+            background: linear-gradient(135deg, #1a0533, #4a2a8a);
+            color: #fff; font-size: 14px; font-weight: 800;
+            border: none; border-radius: 12px; cursor: pointer;
+            box-shadow: 0 3px 12px rgba(26,5,51,0.25);
+            transition: all 0.2s;
+            position: relative; overflow: hidden; z-index: 1;
+        }
+        .store-tap-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(26,5,51,0.35); }
+        .store-tap-btn:active { transform: scale(0.98); }
+        .store-tap-btn .tap-icon {
+            font-size: 15px;
+            animation: tapShake 1.6s ease-in-out infinite;
+        }
+        .store-tap-btn .tap-ripple {
+            position: absolute; top: 50%; left: 50%;
+            width: 40px; height: 40px; border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.15);
+            animation: tapRipple 2s ease-out infinite;
+            pointer-events: none;
+        }
+        @keyframes tapShake {
+            0%, 100% { transform: rotate(0deg); }
+            15% { transform: rotate(-12deg); }
+            30% { transform: rotate(12deg); }
+            45% { transform: rotate(-8deg); }
+            60% { transform: rotate(0deg); }
+        }
+        @keyframes tapRipple {
+            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.3); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(5); }
+        }
+
+        /* ===== Card通用 ===== */
+        .card {
+            background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #eee;
+            transition: all 0.2s;
+        }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .card-icon {
+            width: 40px; height: 40px; border-radius: 12px; display: flex;
+            align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+        }
+        .card-title { font-size: 15px; font-weight: 900; color: #2d2d2d; }
+        .card-sub { font-size: 11px; color: #999; margin-top: 2px; }
+
+
+
+        /* ===== 顶部主权益 Banner ===== */
+        .meituan-hero {
+            background: linear-gradient(135deg, #FFD100, #ff8c00);
+            border-radius: 16px; padding: 14px 16px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 14px rgba(255,140,0,0.25);
+            position: relative; overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .meituan-hero::before {
+            content: ''; position: absolute; top: -20px; right: -20px;
+            width: 80px; height: 80px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
+            animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+        .meituan-hero::after {
+            content: ''; position: absolute; bottom: -20px; left: -10px;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        }
+        .meituan-hero-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: #fff; color: #d84315;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            position: relative; z-index: 1;
+        }
+        .meituan-hero-text {
+            flex: 1; color: #4d3800; position: relative; z-index: 1;
+        }
+        .meituan-hero-title {
+            font-size: 15px; font-weight: 900; margin-bottom: 2px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .meituan-hero-title .arrow {
+            font-size: 16px; font-weight: 900;
+        }
+        .meituan-hero-sub {
+            font-size: 11px; font-weight: 600; opacity: 0.85;
+        }
+
+        /* ===== 2. 美团网费 ===== */
+        .meituan-card { border-color: rgba(255,209,0,0.3); background: linear-gradient(135deg, #fffdf5, #fff8e1); }
+        .meituan-card .card-icon { background: linear-gradient(135deg, #FFD100, #ffab00); color: #fff; font-size: 24px; }
+        .meituan-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--meituan-yellow); color: #4d3800; font-size: 12px;
+            font-weight: 700; padding: 5px 12px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .fee-info { display: flex; gap: 12px; margin: 12px 0; }
+        .fee-item {
+            flex: 1; background: #fff; border-radius: 12px; padding: 12px; text-align: center;
+            border: 1px solid #ffe082;
+        }
+        .fee-val { font-size: 24px; font-weight: 900; color: var(--meituan-yellow-dark); }
+        .fee-unit { font-size: 11px; color: #999; margin-top: 2px; }
+        .meituan-btn {
+            flex: 1; padding: 12px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #FFD100, #ffab00);
+            color: #4d3800; font-size: 15px; font-weight: 900; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .meituan-btn:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(255,209,0,0.4); }
+        .meituan-btn .arrow { font-size: 18px; }
+        /* 已经获得的券区块 */
+        .obtained-block {
+            margin-top: 12px; padding: 12px;
+            border: 1px solid #f0f0f0; border-radius: 12px;
+            background: #fafafa;
+        }
+        .obtained-block-title {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #fff; border: 1px solid #ffe082;
+            font-size: 10px; font-weight: 600; color: #b8860b;
+            padding: 4px 10px; border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .obtained-block-title::before { content: '🎫'; font-size: 11px; }
+        .obtained-block-title.used {
+            border-color: #a5d6a7; color: #2e7d32;
+        }
+        .obtained-block-title.used::before { content: '✅'; }
+        .obtained-block.just-got { animation: couponGlow 1.2s ease-out; }
+        @keyframes couponGlow {
+            0% { border-color: #FFD100; box-shadow: 0 0 0 0 rgba(255,209,0,0.6); background: #fffde7; }
+            50% { border-color: #FFD100; box-shadow: 0 0 0 8px rgba(255,209,0,0); background: #fffde7; }
+            100% { border-color: #f0f0f0; box-shadow: none; background: #fafafa; }
+        }
+        .obtained-block .fee-info { margin-bottom: 12px; }
+        .obtained-block-btn-wrap {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .meituan-tip {
+            margin-top: 12px; padding: 10px 12px; border-radius: 10px;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border: 1px dashed #ffb74d; text-align: center;
+            color: #d84315; font-size: 12px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            position: relative;
+        }
+        .meituan-tip::after {
+            content: ''; position: absolute; bottom: -6px; left: 22px;
+            border: 6px solid transparent;
+            border-top-color: #ffb74d;
+        }
+        .meituan-tip .tip-icon {
+            width: 22px; height: 22px; border-radius: 6px;
+            background: #d84315; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+
+        /* ===== 2.5 游戏权益（3款横排卡） ===== */
+        /* ===== 游戏权益（独立卡片 - 顶部钩子） ===== */
+        .game-reward-card {
+            background: linear-gradient(135deg, #fffdf5, #fff8e1);
+            border: 2px solid #FFD100; border-radius: 18px;
+            padding: 16px; box-shadow: 0 4px 16px rgba(255,209,0,0.18);
+            position: relative; overflow: hidden;
+        }
+        .game-reward-card::before {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 140px; height: 140px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,209,0,0.18) 0%, transparent 70%);
+        }
+        .game-reward-card .card-header { margin-bottom: 12px; position: relative; z-index: 1; }
+        .game-reward-card .card-icon {
+            background: linear-gradient(135deg, #FF6B35, #ff4757); color: #fff;
+        }
+        .game-reward-card .card-title { color: #2d2d2d; }
+        .game-reward-card .card-sub { color: #d84315; font-weight: 600; }
+        .game-hook-banner {
+            display: flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #d84315, #ff6b00);
+            color: #fff; font-size: 11px; font-weight: 700;
+            padding: 6px 10px; border-radius: 8px; margin-bottom: 10px;
+            position: relative; z-index: 1;
+        }
+        .game-hook-banner .pulse-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #fff; animation: pulseGlow 1.2s ease-in-out infinite;
+        }
+        .game-rewards-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            position: relative; z-index: 1;
+        }
+        /* 游戏礼包预览（嵌在美团卡内） */
+        .game-reward-inline {
+            margin-top: 12px; padding: 12px;
+            background: linear-gradient(135deg, #fffdf5, #fff8e1);
+            border: 1px solid #ffe082; border-radius: 12px;
+        }
+        .game-reward-inline-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 800; color: #2d2d2d; margin-bottom: 10px;
+        }
+        .game-reward-inline-title .icon {
+            width: 24px; height: 24px; border-radius: 6px;
+            background: linear-gradient(135deg, #FFD100, #ffab00);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; flex-shrink: 0;
+        }
+        .game-reward-inline-title .sub {
+            font-size: 10px; color: #999; font-weight: 500;
+        }
+        .game-reward-card-mini {
+            background: #fff; border: 1px solid #f0f0f0;
+            border-radius: 10px; padding: 10px 6px; text-align: center;
+            transition: all 0.2s; position: relative;
+            overflow: hidden;
+        }
+        .game-reward-card-mini.unlocked { overflow: visible; }
+        .game-reward-card-mini::before {
+            content: '🔒'; position: absolute; top: 5px; right: 5px;
+            font-size: 10px; opacity: 0.4;
+        }
+        .game-reward-card-mini.unlocked::before {
+            content: '已解锁';
+            top: 4px; right: -6px;
+            font-size: 8px; font-weight: 900; letter-spacing: 0.5px;
+            color: #d32f2f; opacity: 0.85;
+            border: 1.5px solid #d32f2f; border-radius: 3px;
+            padding: 1px 5px;
+            transform: rotate(-16deg);
+            background: rgba(255,255,255,0.75);
+            animation: stampIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        .game-reward-card-mini:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .game-reward-card-mini.unlocked {
+            border-color: #FFD100; background: linear-gradient(180deg, #fffdf5, #fff8e1);
+        }
+        .game-reward-card-mini .gr-icon { font-size: 22px; margin-bottom: 4px; }
+        .game-reward-card-mini .gr-name {
+            font-size: 11px; font-weight: 700; color: #2d2d2d; margin-bottom: 2px;
+        }
+        .game-reward-card-mini .gr-bonus {
+            font-size: 10px; color: #ff6b00; font-weight: 700;
+        }
+        .game-reward-card-mini.unlocked .gr-bonus { color: #d32f2f; }
+        /* 领取按钮（unlocked 时显示） */
+        .gr-claim-btn {
+            display: none; width: 100%; margin-top: 8px; padding: 5px 0;
+            background: linear-gradient(135deg, #FF6B35, #ff4757); color: #fff;
+            font-size: 10px; font-weight: 700; border: none; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(255,107,53,0.3);
+            text-align: center; white-space: nowrap;
+        }
+        .gr-claim-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(255,107,53,0.45); }
+        .game-reward-card-mini.unlocked .gr-claim-btn { display: block; }
+        .gr-claim-btn.claimed {
+            background: #e8f5e9; color: #2e7d32;
+            box-shadow: none; cursor: default;
+        }
+        .gr-claim-btn.claimed:hover { transform: none; box-shadow: none; }
+        /* 使用完成按钮态 */
+        .meituan-btn.used {
+            background: linear-gradient(135deg, #4caf50, #66bb6a) !important;
+            color: #fff !important;
+            cursor: default;
+        }
+        .meituan-btn.used:hover { transform: none !important; box-shadow: none !important; }
+        /* 全部领取完成条幅 */
+        .all-claimed-banner {
+            display: none; margin-top: 10px; padding: 10px;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 1px solid #81c784; border-radius: 8px;
+            text-align: center; font-size: 12px; font-weight: 700; color: #2e7d32;
+        }
+        .all-claimed-banner.show { display: block; animation: bounceIn 0.5s ease; }
+        .flow-step-num {
+            display: inline-block;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #ff6b00; color: #fff;
+            font-size: 10px; font-weight: 900;
+            text-align: center; line-height: 16px;
+            margin-right: 4px;
+        }
+
+        /* ===== 3. 添加社群 ===== */
+        .community-card .card-icon { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+        .community-card { border-color: rgba(33,150,243,0.15); }
+        .store-group-info {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            background: #f0f7ff; border-radius: 12px; margin-bottom: 10px;
+        }
+        .group-avatar {
+            width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .group-info-text { flex: 1; }
+        .group-name { font-size: 13px; font-weight: 700; color: #2d2d2d; }
+        .group-members { font-size: 11px; color: #999; }
+        .join-btn {
+            width: 100%; padding: 11px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--community-blue), #1976d2);
+            color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .join-btn:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(33,150,243,0.35); }
+
+        /* ===== 连续打卡（白卡 + 7天横排） ===== */
+        .streak-card-new {
+            background: #fff; border-radius: 16px; padding: 16px;
+            border: 1px solid #eee;
+        }
+        .streak-new-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+        }
+        .streak-new-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, #ff6b35, #ff4757);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .streak-new-title { font-size: 14px; font-weight: 900; color: #2d2d2d; }
+        .streak-new-sub {
+            font-size: 11px; color: #999; margin-bottom: 12px; padding-left: 46px;
+        }
+        .streak-days-row {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+            margin-bottom: 12px;
+        }
+        .streak-day-cell {
+            border-radius: 10px; padding: 8px 0; text-align: center;
+            border: 1.5px solid #eee; background: #fafafa;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .streak-day-cell.reached {
+            background: linear-gradient(135deg, #ff8c00, #ff6b00);
+            border-color: #ff8c00; color: #fff;
+        }
+        .streak-day-cell.today {
+            border-color: #ff8c00; border-style: dashed;
+            background: #fff;
+        }
+        .streak-day-cell .sd-num {
+            font-size: 14px; font-weight: 900; color: #999;
+        }
+        .streak-day-cell.reached .sd-num { color: #fff; }
+        .streak-day-cell.today .sd-num { color: #ff8c00; }
+        .streak-day-cell .sd-icon {
+            font-size: 10px; margin-top: 1px;
+            color: #ccc; font-weight: 600;
+        }
+        .streak-day-cell.reached .sd-icon { color: rgba(255,255,255,0.85); }
+        .streak-day-cell .sd-mark {
+            position: absolute; top: -5px; right: -5px;
+            background: #ff4757; color: #fff; font-size: 9px;
+            font-weight: 700; padding: 1px 4px; border-radius: 6px;
+            display: none;
+        }
+        .streak-day-cell.reward-marker .sd-mark { display: block; }
+        .streak-info-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border-radius: 10px;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+        }
+        .streak-info-row .sir-text {
+            font-size: 12px; color: #2d2d2d; flex: 1;
+        }
+        .streak-info-row strong { color: #ff6b00; font-weight: 900; }
+        .streak-info-row .sir-reset {
+            background: rgba(255,255,255,0.7); border: 1px solid #ffd9b3;
+            color: #ff6b00; font-size: 10px; padding: 3px 8px;
+            border-radius: 6px; cursor: pointer; font-weight: 600;
+        }
+        .streak-day-cell .sd-bubble {
+            position: absolute; top: -38px; left: 50%; transform: translateX(-50%);
+            background: #fff; border: 1px solid #ff8c00; border-radius: 8px;
+            padding: 4px 8px; font-size: 9.5px; color: #ff6b00; font-weight: 700;
+            white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            display: none; z-index: 5;
+        }
+        .streak-day-cell .sd-bubble::after {
+            content: ''; position: absolute; bottom: -5px; left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent; border-top-color: #ff8c00;
+        }
+        .streak-day-cell .sd-bubble.show { display: block; }
+
+        /* ===== 规则 ===== */
+        .rules-card .rule-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .rules-card .rule-dot {
+            width: 22px; height: 22px; border-radius: 50%; background: var(--deep-purple);
+            color: #fff; font-size: 11px; font-weight: 900; display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .rules-card .rule-text { font-size: 12px; color: #555; line-height: 1.6; }
+
+        /* ===== 底部按钮 ===== */
+        .simulate-btn {
+            padding: 14px; background: linear-gradient(135deg, #1a0533, #4a2a8a);
+            color: #fff; border: none; border-radius: 16px; font-size: 15px; font-weight: 900;
+            cursor: pointer; transition: all 0.2s; width: 100%;
+        }
+        .simulate-btn:hover { transform: scale(1.02); box-shadow: 0 4px 20px rgba(26,5,51,0.35); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+            background: #2d2d2d; color: #fff; padding: 10px 24px; border-radius: 24px;
+            font-size: 13px; font-weight: 700; z-index: 200; opacity: 0;
+            pointer-events: none; transition: all 0.3s ease; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+        /* ===== Modal Overlay ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px); z-index: 500; display: flex;
+            align-items: center; justify-content: center; opacity: 0;
+            pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            width: 340px; max-width: 92vw; background: #fff; border-radius: 24px;
+            padding: 28px 24px 22px; text-align: center; position: relative;
+            transform: scale(0.85) translateY(20px);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.show .modal-card {
+            transform: scale(1) translateY(0);
+        }
+        .modal-close {
+            position: absolute; top: 12px; right: 16px; width: 30px; height: 30px;
+            border-radius: 50%; border: none; background: #f0f0f0; color: #999;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s;
+        }
+        .modal-close:hover { background: #e0e0e0; color: #333; }
+
+        /* Tap Success Modal */
+        .tap-modal-icon {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: linear-gradient(135deg, #FFD100, #ff8c00);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 14px; font-size: 36px;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        .tap-modal-title { font-size: 18px; font-weight: 900; color: #1a0533; margin-bottom: 4px; }
+        .tap-modal-addr { font-size: 11px; color: #999; margin-bottom: 12px; }
+        .tap-modal-stats {
+            display: flex; gap: 10px; justify-content: center; margin: 14px 0;
+        }
+        .tap-modal-stat {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-radius: 12px; padding: 10px 16px; min-width: 80px;
+        }
+        .tap-modal-stat .val { font-size: 22px; font-weight: 900; color: var(--deep-orange); }
+        .tap-modal-stat .lbl { font-size: 10px; color: #999; margin-top: 2px; }
+        .tap-modal-coupon {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 1px dashed #66bb6a;
+            border-radius: 10px; padding: 12px 14px; margin: 12px 0 0;
+            text-align: center; font-size: 14px; font-weight: 900;
+            color: #2e7d32;
+        }
+        .modal-btn {
+            width: 100%; padding: 13px; border-radius: 14px; border: none;
+            font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 6px;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #FFD100, #ff8c00);
+            color: #4d3800;
+        }
+        .modal-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(255,140,0,0.35); }
+        .modal-btn.secondary {
+            background: transparent; color: #999; font-size: 13px; padding: 10px;
+            margin-top: 6px; font-weight: 500;
+            border: none;
+        }
+        .modal-btn.secondary:hover { color: #666; background: transparent; box-shadow: none; }
+        .reward-item-status.claimed { background: #e8f5e9; color: #2e7d32; }
+        .reward-item-status.pending { background: #fff8e1; color: #f57f17; }
+
+
+
+        /* 响应式 */
+        @media (max-width: 420px) {
+            .phone { width: 100%; border-radius: 0; border: none; min-height: 100vh; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone" id="app">
+    <div class="phone-header">
+        <a class="back-btn" href="index.html">← 总览</a>
+        <span class="phone-title">美团网费 · 网吧碰卡</span>
+        <span class="header-badge">美团合作</span>
+    </div>
+
+    <div class="phone-body">
+<!-- 游戏权益（已移入美团卡内作为奖励预览） -->
+        <!-- 顶部主权益 Banner -->
+        <div class="meituan-hero">
+            <div class="meituan-hero-icon">🛵</div>
+            <div class="meituan-hero-text">
+                <div class="meituan-hero-title">美团团购 <span class="arrow">×</span> 网费 <span class="arrow">×</span> 游戏礼包</div>
+                <div class="meituan-hero-sub">碰卡即得 · 三大权益一次到手</div>
+            </div>
+        </div>
+
+        <!-- 门店展示区 -->
+        <div class="store-display-card">
+            <div class="store-badge"><span class="loc-dot"></span>当前门店</div>
+            <div class="store-display-icon" id="storeDisplayIcon">🎮</div>
+            <div class="store-display-name" id="currentStoreName">网鱼网咖 · 三里屯店</div>
+            <div class="store-display-addr" id="currentStoreAddr">朝阳区三里屯太古里B1</div>
+            <div class="store-display-tag">NFC 碰卡可得美团团购券</div>
+            <button class="store-tap-btn" onclick="simulateTap()">
+                <span class="tap-ripple"></span>
+                <span class="tap-icon">📳</span>
+                <span>模拟碰卡</span>
+            </button>
+        </div>
+
+        <!-- 连续打卡 -->
+        <div class="streak-card-new">
+            <div class="streak-new-header">
+                <div class="streak-new-icon">🔥</div>
+                <div class="streak-new-title">连续打卡奖励</div>
+            </div>
+            <div class="streak-new-sub">到店碰卡，连续达标赢好礼</div>
+            <div class="streak-days-row" id="streakDaysRow">
+                <div class="streak-day-cell" data-day="1"><span class="sd-num">D1</span><div class="sd-icon">✓</div><div class="sd-mark">奖</div></div>
+                <div class="streak-day-cell" data-day="2"><span class="sd-num">D2</span><div class="sd-icon">✓</div><div class="sd-mark">奖</div></div>
+                <div class="streak-day-cell" data-day="3"><span class="sd-num">D3</span><div class="sd-icon">✓</div><div class="sd-mark">奖</div><div class="sd-bubble">高额美团权益</div></div>
+                <div class="streak-day-cell" data-day="4"><span class="sd-num">D4</span><div class="sd-icon">—</div><div class="sd-mark">奖</div></div>
+                <div class="streak-day-cell" data-day="5"><span class="sd-num">D5</span><div class="sd-icon">—</div><div class="sd-mark">奖</div><div class="sd-bubble">高额美团权益</div></div>
+                <div class="streak-day-cell" data-day="6"><span class="sd-num">D6</span><div class="sd-icon">—</div><div class="sd-mark">奖</div></div>
+                <div class="streak-day-cell" data-day="7"><span class="sd-num">D7</span><div class="sd-icon">—</div><div class="sd-mark">奖</div></div>
+            </div>
+            <div class="streak-info-row">
+                <div class="sir-text">
+                    已连续 <strong id="streakCount">0</strong> 天 · 连续打卡 <strong>3</strong> 天可得 <strong>高额美团权益</strong>
+                </div>
+                <button class="sir-reset" onclick="resetStreak()">🔄 重置</button>
+            </div>
+        </div>
+
+        <!-- 1. 美团网费 -->
+        <div class="card meituan-card">
+            <div class="card-header">
+                <div class="card-icon">⚡</div>
+                <div>
+                    <div class="card-title">用美团、得游戏礼包</div>
+                    <div class="card-sub">到店碰卡 → 美团下单 → 上机核销 解锁</div>
+                </div>
+            </div>
+                        <!-- 游戏礼包预览（嵌在美团卡内） -->
+            <div class="game-reward-inline" id="gameRewardInline">
+                <div class="game-reward-inline-title">
+                    <span class="icon">🎮</span>
+                    <span id="gameRewardTitle">点击领取</span>
+                </div>
+                <div class="game-rewards-grid" id="gameRewardsGrid">
+                    <div class="game-reward-card-mini locked" data-game="王者荣耀" data-bonus="钻石×50">
+                        <div class="gr-icon">⚔️</div>
+                        <div class="gr-name">王者荣耀</div>
+                        <div class="gr-bonus">钻石×50</div>
+                        <button class="gr-claim-btn" onclick="claimGameReward(this)">点击领取</button>
+                    </div>
+                    <div class="game-reward-card-mini locked" data-game="英雄联盟" data-bonus="特权×100">
+                        <div class="gr-icon">🛡️</div>
+                        <div class="gr-name">英雄联盟</div>
+                        <div class="gr-bonus">特权×100</div>
+                        <button class="gr-claim-btn" onclick="claimGameReward(this)">点击领取</button>
+                    </div>
+                    <div class="game-reward-card-mini locked" data-game="无畏契约" data-bonus="枪皮×4">
+                        <div class="gr-icon">🔫</div>
+                        <div class="gr-name">无畏契约</div>
+                        <div class="gr-bonus">枪皮×4</div>
+                        <button class="gr-claim-btn" onclick="claimGameReward(this)">点击领取</button>
+                    </div>
+                </div>
+            </div>
+            <!-- 已经获得的美团券 -->
+            <div class="obtained-block">
+                <div class="obtained-block-title" id="obtainedTitle">已经获得的美团券</div>
+                <div class="fee-info">
+                    <div class="fee-item">
+                        <div class="fee-val">10<span style="font-size:14px;">元</span></div>
+                        <div class="fee-unit">网费代金券</div>
+                    </div>
+                    <div class="fee-item">
+                        <div class="fee-val">5.9<span style="font-size:14px;">折</span></div>
+                        <div class="fee-unit">团购上网套餐</div>
+                    </div>
+                </div>
+                <div class="obtained-block-btn-wrap">
+                    <button class="meituan-btn" id="meituanBtn" onclick="openMeituan()">
+                        前往美团使用
+                    </button>
+                </div>
+                <div class="all-claimed-banner" id="allClaimedBanner">🎉 太棒了！3 款游戏奖励已全部领取</div>
+            </div>
+        </div>
+
+        <!-- 2. 加入门店社群 -->
+        <div class="card community-card">
+            <div class="card-header">
+                <div class="card-icon">💬</div>
+                <div>
+                    <div class="card-title">加入门店社群</div>
+                    <div class="card-sub">预约包间、赛事报名、专属福利</div>
+                </div>
+            </div>
+            <div class="store-group-info">
+                <div class="group-avatar" id="groupAvatar">🎮</div>
+                <div class="group-info-text">
+                    <div class="group-name" id="groupName">网鱼网咖·三里屯店 玩家群</div>
+                    <div class="group-members" id="groupMembers">128人 · 店长在线</div>
+                </div>
+            </div>
+            <button class="join-btn" onclick="joinCommunity()">+ 加入门店社群</button>
+        </div>
+
+        <!-- 规则 -->
+        <div class="card rules-card">
+            <div class="card-title" style="margin-bottom:10px;">📋 活动规则</div>
+            <div class="rule-item">
+                <div class="rule-dot">1</div>
+                <div class="rule-text">到合作网吧 <strong>NFC 碰卡</strong>，即可解锁美团网费权益</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-dot">2</div>
+                <div class="rule-text">美团网费券 <strong>到店核销</strong>，通过美团团购低价购买上网套餐</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-dot">3</div>
+                <div class="rule-text">每店仅可碰卡打卡<strong>1次/天</strong>，奖励实时发放至账户</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 弹窗：碰卡成功 ==================== -->
+<div class="modal-overlay" id="tapModal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeModal('tapModal')">✕</button>
+        <div class="tap-modal-icon" id="tapModalIcon">📳</div>
+        <div class="tap-modal-title" id="tapModalTitle">碰卡成功!</div>
+        <div class="tap-modal-addr" id="tapModalAddr"></div>
+        <div class="tap-modal-stats" id="tapModalStats">
+            <div class="tap-modal-stat">
+                <div class="val" id="modalStreakVal">3</div>
+                <div class="lbl">连续打卡</div>
+            </div>
+            <div class="tap-modal-stat">
+                <div class="val">+1</div>
+                <div class="lbl">今日打卡</div>
+            </div>
+        </div>
+        <div class="tap-modal-coupon" id="tapModalCoupon">🎁 获得5折美团网费券</div>
+        <button class="modal-btn" onclick="closeModal('tapModal')">前往使用获得游戏权益</button>
+        <button class="modal-btn secondary" onclick="closeModal('tapModal')">稍后再说</button>
+    </div>
+</div>
+
+<script>
+// ==================== 数据 ====================
+const INTERNET_CAFES = [
+    { id: 'c1', name: '网鱼网咖 · 三里屯店', addr: '朝阳区三里屯太古里B1', dist: '当前', icon: '🎮', avatar: '🎮', groupName: '网鱼网咖·三里屯店 玩家群', members: '128人' },
+    { id: 'c2', name: '杰拉网咖 · 望京店', addr: '朝阳区望京SOHO T2 B1', dist: '1.2km', icon: '🖥️', avatar: '🖥️', groupName: '杰拉网咖·望京店 电竞群', members: '96人' },
+    { id: 'c3', name: '树呆熊网咖 · 国贸店', addr: '朝阳区建国路88号', dist: '2.5km', icon: '🐻', avatar: '🐻', groupName: '树呆熊网咖·国贸店 玩家群', members: '73人' },
+    { id: 'c4', name: '白夜网咖 · 双井店', addr: '朝阳区广渠路66号', dist: '3.1km', icon: '🌙', avatar: '🌙', groupName: '白夜网咖·双井店 开黑群', members: '55人' },
+    { id: 'c5', name: '竞域电竞 · 五道口店', addr: '海淀区成府路28号', dist: '4.8km', icon: '⚔️', avatar: '⚔️', groupName: '竞域电竞·五道口店 战队群', members: '112人' },
+];
+
+let currentCafeIndex = 0;
+
+// ==================== 连续打卡 ====================
+const STREAK_KEY = 'meituan_demo_streak';
+const TOTAL_STREAK_DAYS = 7;
+const MILESTONES = { 3: 'D3 · 美团网费券 8元', 5: 'D5 · 美团网费券 15元', 7: 'D7 · 美团网费券 25元' };
+
+function loadStreak() {
+    try {
+        const raw = localStorage.getItem(STREAK_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { streak: 0, lastDate: null };
+}
+
+function saveStreak(data) {
+    localStorage.setItem(STREAK_KEY, JSON.stringify(data));
+}
+
+function getToday() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function getYesterdayStr() {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+}
+
+function tryCheckIn() {
+    const today = getToday();
+    const data = loadStreak();
+
+    // 同一天不重复累加
+    if (data.lastDate === today) return { streak: data.streak, justIncreased: false, newMilestone: null };
+
+    const yesterday = getYesterdayStr();
+
+    if (data.lastDate === yesterday) {
+        // 昨天打过卡，连续+1
+        data.streak = Math.min(data.streak + 1, TOTAL_STREAK_DAYS);
+    } else {
+        // 中断或首次，从1开始
+        data.streak = 1;
+    }
+
+    data.lastDate = today;
+    saveStreak(data);
+
+    // 检查是否触发里程碑
+    let newMilestone = null;
+    if (MILESTONES[data.streak]) {
+        newMilestone = MILESTONES[data.streak];
+    }
+
+    return { streak: data.streak, justIncreased: true, newMilestone };
+}
+
+function resetStreak() {
+    saveStreak({ streak: 0, lastDate: null });
+    updateStreakUI();
+    showToast('🔄 连续打卡已重置');
+}
+
+function updateStreakUI() {
+    const data = loadStreak();
+    const count = data.streak;
+    const today = getToday();
+    const checkedToday = (data.lastDate === today);
+
+    // 7天格子状态
+    document.querySelectorAll('.streak-day-cell').forEach(cell => {
+        const day = parseInt(cell.dataset.day);
+        cell.classList.remove('reached', 'today', 'reward-marker');
+        if (count >= day) {
+            cell.classList.add('reached');
+        } else if (checkedToday && day === count + 1) {
+            cell.classList.add('today');
+        }
+        // D3、D5 是高额权益触发节点，加奖牌角标 + 气泡
+        if (day === 3 || day === 5) {
+            cell.classList.add('reward-marker');
+            const bubble = cell.querySelector('.sd-bubble');
+            if (bubble) bubble.classList.add('show');
+        }
+    });
+
+    // 底部文字
+    document.getElementById('streakCount').textContent = count;
+}
+
+// ==================== 弹窗系统 ====================
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+// ==================== 渲染 ====================
+function renderAll() {
+    renderCurrentStore();
+    updateStreakUI();
+}
+function renderCurrentStore() {
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+    document.getElementById('currentStoreName').textContent = cafe.name;
+    document.getElementById('currentStoreAddr').textContent = cafe.addr;
+    document.getElementById('storeDisplayIcon').textContent = cafe.icon;
+    document.getElementById('groupName').textContent = cafe.groupName;
+    document.getElementById('groupMembers').textContent = cafe.members + ' · 店长在线';
+    document.getElementById('groupAvatar').textContent = cafe.avatar;
+}
+
+// ==================== 碰卡弹窗 ====================
+function simulateTap() {
+    // 随机选一个网吧
+    currentCafeIndex = Math.floor(Math.random() * INTERNET_CAFES.length);
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+
+    // 连续打卡
+    const result = tryCheckIn();
+
+    // 准备弹窗内容
+    document.getElementById('tapModalIcon').textContent = cafe.icon;
+    document.getElementById('tapModalTitle').textContent = '碰卡成功!';
+    document.getElementById('tapModalAddr').textContent = cafe.name + ' · ' + cafe.addr;
+    document.getElementById('modalStreakVal').textContent = result.streak;
+
+    // 根据连续天数切换券面文案
+    const coupon = document.getElementById('tapModalCoupon');
+    if (result.streak >= 3) {
+        coupon.innerHTML = '🎁 获得高额美团网费券';
+    } else {
+        coupon.innerHTML = '🎁 获得5折美团网费券';
+    }
+
+    renderAll();
+    openModal('tapModal');
+
+    // 券区高亮反馈：碰卡后美团券刷新到账
+    const block = document.querySelector('.obtained-block');
+    if (block) {
+        block.classList.remove('just-got');
+        void block.offsetWidth;
+        block.classList.add('just-got');
+    }
+}
+
+// ==================== 其他交互 ====================
+let meituanUsed = false;
+let claimedCount = 0;
+const TOTAL_GAMES = 3;
+
+function openMeituan() {
+    if (meituanUsed) return;
+    const btn = document.getElementById('meituanBtn');
+    btn.disabled = true;
+    btn.textContent = '🛵 跳转中...';
+    showToast('🛵 正在跳转美团 App...');
+    setTimeout(() => {
+        meituanUsed = true;
+        // 按钮变绿色已使用态
+        btn.classList.add('used');
+        btn.innerHTML = '✅ 已使用完成';
+        // 标题切换 + 解锁游戏卡
+        const title = document.getElementById('obtainedTitle');
+        title.classList.add('used');
+        title.textContent = '已核销 · 0/' + TOTAL_GAMES + ' 已领取';
+        document.getElementById('gameRewardsGrid').querySelectorAll('.game-reward-card-mini').forEach(card => {
+            card.classList.remove('locked');
+            card.classList.add('unlocked');
+        });
+        document.getElementById('gameRewardTitle').textContent = '点击领取';
+        showToast('🎁 券已核销，点击下方游戏领取奖励');
+    }, 1500);
+}
+
+function claimGameReward(btn) {
+    if (btn.classList.contains('claimed')) return;
+    const card = btn.closest('.game-reward-card-mini');
+    const game = card.dataset.game;
+    const bonus = card.dataset.bonus;
+    btn.classList.add('claimed');
+    btn.innerHTML = '✓ 已领取';
+    claimedCount++;
+    // 更新标题计数
+    document.getElementById('obtainedTitle').textContent =
+        '已核销 · ' + claimedCount + '/' + TOTAL_GAMES + ' 已领取';
+    showToast(`✅ ${game} · ${bonus} 已到账`);
+    // 全部领完
+    if (claimedCount === TOTAL_GAMES) {
+        setTimeout(() => {
+            document.getElementById('allClaimedBanner').classList.add('show');
+            showToast('🎉 全部游戏奖励已收入囊中');
+        }, 400);
+    }
+}
+
+function joinCommunity() {
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+    showToast(`✅ 已添加到：${cafe.groupName}`);
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timeout);
+    t._timeout = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==================== 初始化 ====================
+renderAll();
+</script>
+
+</body>
+</html>

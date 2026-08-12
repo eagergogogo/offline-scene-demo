@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线下活动中心</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #ffd700; --orange: #ff8c00; --deep-orange: #e67e00;
+            --red-orange: #ff6b35; --deep-purple: #1a0533;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            background: #f0f0f5; display: flex; justify-content: center;
+            align-items: center; min-height: 100vh; padding: 20px;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(255,215,0,0.04) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 60%, rgba(255,140,0,0.03) 0%, transparent 60%);
+            pointer-events: none; z-index: 0;
+        }
+
+        /* === 手机壳 === */
+        .phone {
+            width: 390px; min-height: 844px; max-height: 900px;
+            background: #f8f8f8; border-radius: 32px; overflow: hidden;
+            border: 3px solid #ddd; box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            position: relative; z-index: 1; display: flex; flex-direction: column;
+        }
+        .phone-header {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            padding: 18px 20px; display: flex; align-items: center; gap: 12px;
+            flex-shrink: 0;
+        }
+        .header-back {
+            width: 32px; height: 32px; border-radius: 10px;
+            background: rgba(255,255,255,0.1); border: none; color: #fff;
+            font-size: 18px; cursor: pointer; display: none;
+            align-items: center; justify-content: center;
+        }
+        .header-back.show { display: flex; }
+        .header-icon {
+            width: 38px; height: 38px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            box-shadow: 0 3px 12px rgba(255,215,0,0.3);
+        }
+        .header-info { flex: 1; min-width: 0; }
+        .header-title { font-size: 17px; font-weight: 900; color: #fff; }
+        .header-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+        .phone-body {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            padding: 16px; position: relative;
+            -webkit-overflow-scrolling: touch;
+        }
+        .phone-body::-webkit-scrollbar { width: 0; }
+
+        /* === 页面切换 === */
+        .page {
+            display: none; flex-direction: column; gap: 14px;
+            animation: fadeIn 0.4s ease-out; padding-bottom: 80px;
+        }
+        .page.active { display: flex; }
+
+        /* === 底部 Tab === */
+        .bottom-tab {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 64px; background: #fff; border-top: 1px solid #eee;
+            display: flex; align-items: center; justify-content: space-around;
+            z-index: 10; flex-shrink: 0;
+        }
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            gap: 4px; cursor: pointer; padding: 8px 0; transition: all 0.25s ease;
+            border: none; background: none; color: #999; font-family: inherit;
+        }
+        .tab-item .tab-icon { font-size: 22px; transition: transform 0.25s ease; }
+        .tab-item .tab-label { font-size: 11px; font-weight: 500; }
+        .tab-item.active { color: var(--deep-orange); }
+        .tab-item.active .tab-icon { transform: scale(1.1); }
+        .tab-item.active .tab-label { font-weight: 700; }
+        .bottom-tab.hidden { display: none; }
+
+        /* ==================== 首页 Banner（两列布局） ==================== */
+        .store-banner {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            border-radius: 18px; padding: 20px 18px; color: #fff;
+            position: relative; overflow: hidden;
+        }
+        .store-banner::after {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.15), transparent 70%);
+        }
+        .banner-top {
+            display: flex; align-items: center; gap: 14px;
+            position: relative; z-index: 1; margin-bottom: 14px;
+        }
+        .banner-icon {
+            font-size: 40px; flex-shrink: 0;
+            animation: pulseNFC 1.8s ease-in-out infinite;
+        }
+        .banner-text { flex: 1; }
+        .banner-text h2 { font-size: 18px; font-weight: 900; }
+        .banner-text p {
+            font-size: 12px; color: rgba(255,255,255,0.7);
+            margin-top: 4px; line-height: 1.5;
+        }
+        .banner-tag {
+            display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600;
+            background: rgba(255,215,0,0.2); border: 1px solid rgba(255,215,0,0.3);
+            padding: 3px 10px; border-radius: 10px; color: var(--gold);
+        }
+        /* === 连续碰卡奖励卡 === */
+        .streak-card {
+            position: relative; z-index: 1;
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,215,0,0.35);
+            border-radius: 14px; padding: 12px 14px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .streak-card:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+        .streak-fire {
+            font-size: 32px; flex-shrink: 0;
+            animation: pulseFire 1.4s ease-in-out infinite;
+        }
+        .streak-info { flex: 1; min-width: 0; }
+        .streak-title { font-size: 14px; font-weight: 700; color: #fff; }
+        .streak-sub { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .streak-progress {
+            display: flex; gap: 4px; margin-top: 6px;
+        }
+        .streak-dot {
+            flex: 1; height: 6px; border-radius: 3px;
+            background: rgba(255,255,255,0.18);
+        }
+        .streak-dot.done {
+            background: linear-gradient(90deg, var(--gold), var(--red-orange));
+        }
+        .streak-go {
+            flex-shrink: 0; font-size: 12px; font-weight: 700;
+            color: var(--gold); display: flex; align-items: center; gap: 4px;
+        }
+
+        /* === 附近活动推荐（折叠块） === */
+        .nearby-toggle {
+            font-size: 11px; font-weight: 600;
+            padding: 5px 12px; border-radius: 14px;
+            border: 1.5px solid var(--deep-orange);
+            background: #fff; color: var(--deep-orange);
+            cursor: pointer; transition: all 0.25s ease;
+            font-family: inherit; display: flex; align-items: center; gap: 4px;
+        }
+        .nearby-toggle:hover { background: linear-gradient(135deg, var(--deep-orange), var(--orange)); color: #fff; transform: scale(1.04); }
+        .nearby-toggle.active {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border-color: transparent;
+        }
+        .nearby-collapse {
+            display: flex; flex-direction: column; gap: 10px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .nearby-collapse-hint {
+            font-size: 12px; color: #999; padding: 0 4px 4px;
+        }
+        .nearby-item {
+            background: #fff; border: 1.5px solid #eee; border-radius: 14px;
+            padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .nearby-item:hover {
+            border-color: var(--deep-orange);
+            box-shadow: 0 4px 16px rgba(230,126,0,0.12);
+            transform: translateX(3px);
+        }
+        .nearby-emoji {
+            font-size: 24px; flex-shrink: 0;
+            background: linear-gradient(135deg, #fff5e0, #fff);
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nearby-info { flex: 1; min-width: 0; }
+        .nearby-name {
+            font-size: 14px; font-weight: 700; color: #2d2d2d;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .nearby-meta {
+            font-size: 11px; color: #999; margin-top: 3px;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        }
+        .nearby-dist {
+            flex-shrink: 0; font-size: 12px; font-weight: 700;
+            color: var(--deep-orange); background: rgba(230,126,0,0.1);
+            padding: 5px 10px; border-radius: 10px;
+        }
+        .streak-card {
+            position: relative; z-index: 1;
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,215,0,0.35);
+            border-radius: 14px; padding: 12px 14px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .streak-card:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
+        .streak-fire {
+            font-size: 32px; flex-shrink: 0;
+            animation: pulseFire 1.4s ease-in-out infinite;
+        }
+        .streak-info { flex: 1; min-width: 0; }
+        .streak-title { font-size: 14px; font-weight: 700; color: #fff; }
+        .streak-sub { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .streak-progress {
+            display: flex; gap: 4px; margin-top: 6px;
+        }
+        .streak-dot {
+            flex: 1; height: 6px; border-radius: 3px;
+            background: rgba(255,255,255,0.18);
+        }
+        .streak-dot.done {
+            background: linear-gradient(90deg, var(--gold), var(--red-orange));
+        }
+        .streak-go {
+            flex-shrink: 0; font-size: 12px; font-weight: 700;
+            color: var(--gold); display: flex; align-items: center; gap: 4px;
+        }
+
+        /* === 游戏分类横滑 === */
+        .game-tags-section { position: relative; }
+        .game-tags {
+            display: flex; gap: 10px; overflow-x: auto; padding: 4px 0;
+            scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+        }
+        .game-tags::-webkit-scrollbar { height: 0; }
+        .game-tag {
+            flex-shrink: 0; padding: 8px 16px; border-radius: 20px;
+            border: 1.5px solid #e0e0e0; background: #fff;
+            font-size: 13px; font-weight: 600; color: #666;
+            cursor: pointer; transition: all 0.25s ease; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .game-tag:hover { border-color: var(--deep-orange); color: var(--deep-orange); }
+        .game-tag.active {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border-color: transparent;
+            box-shadow: 0 3px 12px rgba(230,126,0,0.3);
+        }
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 2px;
+        }
+        .section-title { font-size: 16px; font-weight: 700; color: #2d2d2d; }
+        .section-count { font-size: 12px; color: #999; }
+
+        /* === 活动卡片（整体可点击） === */
+        .activity-card {
+            background: #fff; border-radius: 16px; padding: 16px; border: 1.5px solid #eee;
+            transition: all 0.3s ease; position: relative; cursor: pointer;
+        }
+        .activity-card:hover {
+            border-color: var(--deep-orange);
+            box-shadow: 0 4px 20px rgba(230,126,0,0.12);
+            transform: translateY(-2px);
+        }
+        .activity-head {
+            display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;
+        }
+        .activity-game-icon {
+            width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; position: relative;
+        }
+        .activity-game-icon::after {
+            content: ''; position: absolute; inset: -2px; border-radius: 16px;
+            border: 1.5px solid rgba(255,215,0,0.3);
+        }
+        .activity-info { flex: 1; min-width: 0; }
+        .activity-game-name {
+            font-size: 12px; color: var(--deep-orange); font-weight: 600;
+        }
+        .activity-title {
+            font-size: 15px; font-weight: 700; color: #2d2d2d;
+            margin-top: 2px; line-height: 1.3;
+        }
+        .activity-reward {
+            font-size: 12px; color: #888; margin-top: 4px;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .activity-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px;
+        }
+        .status-tag {
+            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .status-going { background: rgba(0,200,83,0.1); color: #00c853; }
+        .status-soon { background: rgba(255,140,0,0.1); color: var(--deep-orange); }
+        .status-end { background: rgba(153,153,153,0.12); color: #aaa; }
+        .action-btns { display: flex; gap: 8px; align-items: center; }
+        .btn-join {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border: none; border-radius: 18px; padding: 7px 18px;
+            font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+            white-space: nowrap; font-family: inherit;
+        }
+        .btn-join:hover { transform: scale(1.04); box-shadow: 0 3px 12px rgba(230,126,0,0.4); }
+        .btn-join.joined {
+            background: linear-gradient(135deg, #00c853, #00e676); pointer-events: none;
+        }
+        .btn-join.soon {
+            background: rgba(255,140,0,0.15); color: var(--deep-orange);
+            cursor: default; pointer-events: none;
+        }
+        .btn-join.ended {
+            background: #eee; color: #999; cursor: default; pointer-events: none;
+        }
+        .fav-btn {
+            width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid #eee;
+            background: #fff; cursor: pointer; font-size: 18px; display: flex;
+            align-items: center; justify-content: center; transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .fav-btn:hover { border-color: var(--gold); }
+        .fav-btn.faved { background: #fff5e0; border-color: var(--gold); }
+        /* 卡片类型角标 */
+        .type-tag {
+            position: absolute; top: 12px; right: 12px;
+            font-size: 10px; font-weight: 700; padding: 2px 8px;
+            border-radius: 8px; color: #fff;
+            background: linear-gradient(135deg, var(--red-orange), var(--orange));
+        }
+        .type-tag.collect { background: linear-gradient(135deg, #ff6b35, #ff8c00); }
+        .type-tag.continuous { background: linear-gradient(135deg, #00c853, #00e676); }
+        .type-tag.multi { background: linear-gradient(135deg, #1976d2, #42a5f5); }
+        .type-tag.cross { background: linear-gradient(135deg, #7b1fa2, #ba68c8); }
+        .type-tag.flip { background: linear-gradient(135deg, #d32f2f, #ff5722); }
+        .type-tag.team { background: linear-gradient(135deg, #00838f, #4dd0e1); }
+
+        /* === 空状态 === */
+        .empty-state {
+            text-align: center; padding: 40px 20px; color: #bbb;
+        }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state .empty-text { font-size: 14px; }
+        .empty-state .empty-sub { font-size: 12px; color: #ccc; margin-top: 4px; }
+
+        /* ==================== 我的 ==================== */
+        .mine-section {
+            background: #fff; border-radius: 16px; padding: 18px; border: 1.5px solid #eee;
+        }
+        .mine-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .mine-section-title {
+            font-size: 15px; font-weight: 700; color: #2d2d2d;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .mine-section-title .sec-icon {
+            width: 30px; height: 30px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 16px;
+        }
+        .mine-count {
+            font-size: 12px; color: #999; background: #f5f5f5;
+            padding: 3px 10px; border-radius: 10px;
+        }
+
+        .history-item, .coupon-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 0; border-bottom: 1px solid #f5f5f5;
+        }
+        .history-item:last-child, .coupon-item:last-child { border-bottom: none; }
+        .hi-icon {
+            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .hi-info { flex: 1; min-width: 0; }
+        .hi-title { font-size: 14px; font-weight: 700; color: #2d2d2d; }
+        .hi-game { font-size: 12px; color: var(--deep-orange); font-weight: 500; margin-top: 2px; }
+        .hi-time { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+        .game-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .game-chip {
+            padding: 8px 14px; border-radius: 20px; border: 1.5px solid #eee;
+            background: #fff; font-size: 13px; font-weight: 600; color: #666;
+            cursor: pointer; transition: all 0.25s ease;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .game-chip:hover { border-color: var(--deep-orange); }
+        .game-chip.interested {
+            background: linear-gradient(135deg, rgba(230,126,0,0.08), rgba(255,140,0,0.04));
+            border-color: var(--deep-orange); color: var(--deep-orange);
+        }
+        .game-chip .chip-add {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #eee; display: flex; align-items: center;
+            justify-content: center; font-size: 11px; color: #999;
+            transition: all 0.25s ease;
+        }
+        .game-chip.interested .chip-add {
+            background: var(--deep-orange); color: #fff; transform: rotate(45deg);
+        }
+
+        .coupon-item {
+            background: linear-gradient(135deg, rgba(255,215,0,0.04), rgba(230,126,0,0.03));
+            border-radius: 12px; padding: 14px; margin-bottom: 10px; border-bottom: none;
+            border: 1.5px solid rgba(230,126,0,0.12);
+        }
+        .coupon-item:last-child { margin-bottom: 0; }
+        .coupon-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .coupon-icon {
+            width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .coupon-info { flex: 1; min-width: 0; }
+        .coupon-reward { font-size: 14px; font-weight: 700; color: #2d2d2d; }
+        .coupon-source { font-size: 12px; color: #999; margin-top: 2px; }
+        .btn-use {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border: none; border-radius: 16px; padding: 7px 16px;
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+            white-space: nowrap; font-family: inherit;
+        }
+        .btn-use:hover { transform: scale(1.04); }
+        .btn-use.used { background: #ddd; color: #aaa; pointer-events: none; }
+
+        .clear-btn {
+            width: 100%; margin-top: 8px; padding: 12px;
+            background: transparent; border: 1.5px dashed #ddd; border-radius: 14px;
+            color: #999; font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: all 0.3s ease; font-family: inherit;
+        }
+        .clear-btn:hover { border-color: #ff5252; color: #ff5252; }
+
+        /* === Toast === */
+        .toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: #2d2d2d; color: #fff; padding: 12px 24px; border-radius: 24px;
+            font-size: 14px; font-weight: 500; z-index: 100;
+            display: none; animation: fadeIn 0.4s ease-out;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+        .toast.show { display: flex; align-items: center; gap: 8px; }
+
+        /* === 通用弹窗 === */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 50;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-popup {
+            background: #fff; border-radius: 22px; padding: 30px 22px; text-align: center;
+            width: 280px; animation: popIn 0.4s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+        }
+        .modal-emoji { font-size: 52px; margin-bottom: 12px; }
+        .modal-title { font-size: 18px; font-weight: 900; color: #2d2d2d; margin-bottom: 4px; }
+        .modal-desc { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.6; }
+        .modal-btn {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border: none; border-radius: 24px; padding: 12px 36px;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s ease; font-family: inherit;
+            box-shadow: 0 4px 16px rgba(230,126,0,0.35);
+        }
+        .modal-btn:hover { transform: scale(1.03); }
+        .modal-btn.cancel {
+            background: #f0f0f0; color: #888; box-shadow: none; margin-left: 10px;
+        }
+
+        /* ==================== 详情页通用 ==================== */
+        .detail-hero {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            border-radius: 18px; padding: 20px 18px; color: #fff;
+            position: relative; overflow: hidden;
+        }
+        .detail-hero::after {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 120px; height: 120px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.18), transparent 70%);
+        }
+        .detail-hero-top {
+            display: flex; align-items: center; gap: 14px;
+            position: relative; z-index: 1;
+        }
+        .detail-hero-icon {
+            width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+        }
+        .detail-hero-text { flex: 1; min-width: 0; }
+        .detail-hero-game { font-size: 12px; color: var(--gold); font-weight: 600; }
+        .detail-hero-title { font-size: 19px; font-weight: 900; margin-top: 2px; line-height: 1.3; }
+        .detail-hero-meta {
+            display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;
+            position: relative; z-index: 1;
+        }
+        .detail-meta-pill {
+            font-size: 11px; padding: 4px 10px; border-radius: 10px;
+            background: rgba(255,255,255,0.15); color: #fff;
+        }
+
+        .detail-info-card {
+            background: #fff; border-radius: 16px; padding: 16px;
+            border: 1.5px solid #eee;
+        }
+        .detail-info-title {
+            font-size: 15px; font-weight: 700; color: #2d2d2d;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+        }
+        .detail-info-desc {
+            font-size: 13px; color: #666; line-height: 1.7;
+        }
+        .detail-reward-card {
+            background: linear-gradient(135deg, rgba(255,215,0,0.06), rgba(230,126,0,0.04));
+            border: 1.5px solid rgba(230,126,0,0.2);
+            border-radius: 14px; padding: 14px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .detail-reward-emoji { font-size: 36px; }
+        .detail-reward-info { flex: 1; }
+        .detail-reward-label { font-size: 12px; color: #999; }
+        .detail-reward-text { font-size: 15px; font-weight: 700; color: #2d2d2d; margin-top: 2px; }
+
+        .detail-bottom-bar {
+            position: sticky; bottom: 0; left: 0; right: 0;
+            background: #fff; padding: 12px 16px; margin: 0 -16px;
+            border-top: 1px solid #eee; display: flex; gap: 10px;
+            z-index: 5;
+        }
+        .detail-btn-primary {
+            flex: 1; background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border: none; border-radius: 22px; padding: 13px;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s ease; font-family: inherit;
+            box-shadow: 0 4px 16px rgba(230,126,0,0.35);
+        }
+        .detail-btn-primary:hover { transform: scale(1.02); }
+        .detail-btn-primary:disabled {
+            background: #ddd; color: #999; box-shadow: none; cursor: not-allowed;
+        }
+        .detail-btn-secondary {
+            width: 50px; border-radius: 50%; background: #f5f5f5;
+            border: 1.5px solid #eee; color: #999; font-size: 20px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .detail-btn-secondary.faved { background: #fff5e0; border-color: var(--gold); }
+
+        /* ===== 集字详情 ===== */
+        .word-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+        }
+        .word-card {
+            background: #fff; border: 1.5px solid #eee; border-radius: 14px;
+            padding: 16px 8px; text-align: center;
+            position: relative; transition: all 0.3s ease;
+        }
+        .word-card.owned {
+            background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(230,126,0,0.06));
+            border-color: var(--orange);
+        }
+        .word-card.owned::after {
+            content: '✓'; position: absolute; top: 6px; right: 8px;
+            color: #00c853; font-weight: 900; font-size: 12px;
+        }
+        .word-char {
+            font-size: 28px; font-weight: 900; color: var(--deep-orange);
+            font-family: 'STKaiti', 'KaiTi', serif;
+        }
+        .word-card:not(.owned) .word-char { color: #ccc; }
+        .word-label { font-size: 11px; color: #999; margin-top: 4px; }
+
+        .lottery-section {
+            background: linear-gradient(135deg, #fff8e1, #fff3e0);
+            border: 1.5px solid var(--gold); border-radius: 16px;
+            padding: 18px; text-align: center;
+        }
+        .lottery-section h4 {
+            font-size: 15px; font-weight: 700; color: var(--deep-orange); margin-bottom: 8px;
+        }
+        .lottery-section p { font-size: 12px; color: #888; margin-bottom: 12px; }
+        .lottery-btn {
+            background: linear-gradient(135deg, var(--gold), var(--red-orange));
+            color: #fff; border: none; border-radius: 22px;
+            padding: 12px 32px; font-size: 15px; font-weight: 900;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(255,140,0,0.4); font-family: inherit;
+        }
+        .lottery-btn:hover { transform: scale(1.05); }
+        .lottery-btn:disabled {
+            background: #ddd; color: #999; box-shadow: none; cursor: not-allowed;
+        }
+
+        /* ===== 连续打卡详情 ===== */
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+        }
+        .day-cell {
+            aspect-ratio: 1; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; background: #f5f5f5; color: #999;
+            position: relative; flex-direction: column;
+        }
+        .day-cell.done {
+            background: linear-gradient(135deg, rgba(0,200,83,0.15), rgba(0,230,118,0.08));
+            color: #00c853;
+        }
+        .day-cell.today {
+            border: 2px solid var(--deep-orange);
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; font-weight: 900;
+            animation: pulseToday 1.6s ease-in-out infinite;
+        }
+        .day-cell.missed { background: #fce4e4; color: #e57373; }
+        .day-cell .day-num { font-size: 13px; font-weight: 700; }
+        .day-cell .day-label { font-size: 9px; margin-top: 2px; }
+        .day-reward {
+            font-size: 10px; margin-top: 2px; color: var(--deep-orange);
+        }
+
+        /* ===== 多店打卡详情 ===== */
+        .multi-store-list { display: flex; flex-direction: column; gap: 10px; }
+        .multi-store-item {
+            background: #fff; border: 1.5px solid #eee; border-radius: 14px;
+            padding: 14px; display: flex; align-items: center; gap: 12px;
+            transition: all 0.3s ease;
+        }
+        .multi-store-item.checked {
+            background: linear-gradient(135deg, rgba(0,200,83,0.06), rgba(0,230,118,0.03));
+            border-color: rgba(0,200,83,0.3);
+        }
+        .multi-store-rank {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 900; flex-shrink: 0;
+        }
+        .multi-store-item.checked .multi-store-rank {
+            background: linear-gradient(135deg, #00c853, #00e676);
+        }
+        .multi-store-info { flex: 1; min-width: 0; }
+        .multi-store-name { font-size: 14px; font-weight: 700; color: #2d2d2d; }
+        .multi-store-addr { font-size: 11px; color: #999; margin-top: 2px; }
+        .multi-store-dist { font-size: 11px; color: var(--deep-orange); font-weight: 600; margin-top: 2px; }
+        .multi-store-check {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #f0f0f0; color: #ccc; display: flex; align-items: center;
+            justify-content: center; font-size: 16px; font-weight: 900; flex-shrink: 0;
+        }
+        .multi-store-item.checked .multi-store-check {
+            background: linear-gradient(135deg, #00c853, #00e676); color: #fff;
+        }
+
+        /* ===== 跨游戏/组队详情 ===== */
+        .team-section {
+            background: linear-gradient(135deg, rgba(123,31,162,0.06), rgba(186,104,200,0.03));
+            border: 1.5px solid rgba(123,31,162,0.2);
+            border-radius: 16px; padding: 16px;
+        }
+        .team-section h4 {
+            font-size: 15px; font-weight: 700; color: #7b1fa2; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .team-members {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+        }
+        .team-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .team-avatar.empty {
+            background: #f0f0f0; color: #ccc; border: 2px dashed #ddd;
+        }
+        .cross-game-card {
+            background: #fff; border: 1.5px solid #eee; border-radius: 14px;
+            padding: 14px; display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .cross-game-card:hover {
+            border-color: var(--deep-orange); transform: translateX(3px);
+        }
+        .cross-game-icon {
+            width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
+        }
+        .cross-game-info { flex: 1; min-width: 0; }
+        .cross-game-name { font-size: 14px; font-weight: 700; color: #2d2d2d; }
+        .cross-game-desc { font-size: 11px; color: #999; margin-top: 2px; }
+        .cross-game-arrow { color: #ccc; font-size: 18px; }
+
+        /* ===== 翻卡详情 ===== */
+        .flip-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+        }
+        .flip-card {
+            aspect-ratio: 1; border-radius: 14px;
+            background: linear-gradient(135deg, var(--deep-purple), #4a2a8a);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 22px; font-weight: 900;
+            position: relative; cursor: pointer;
+            transition: all 0.4s ease;
+        }
+        .flip-card.flipped {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            color: var(--deep-purple);
+        }
+        .flip-card.flipped::after {
+            content: '✓'; position: absolute; top: 4px; right: 6px;
+            color: #fff; font-size: 11px;
+        }
+
+        /* ===== 已结束详情 ===== */
+        .ended-summary {
+            background: linear-gradient(135deg, #f5f5f5, #eee);
+            border-radius: 16px; padding: 18px; text-align: center;
+        }
+        .ended-summary .big-num {
+            font-size: 32px; font-weight: 900; color: #999;
+        }
+        .ended-summary .label { font-size: 12px; color: #aaa; margin-top: 4px; }
+        .ended-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            margin-top: 14px;
+        }
+        .ended-stat {
+            background: #fff; border-radius: 10px; padding: 10px;
+        }
+        .ended-stat .num { font-size: 18px; font-weight: 900; color: var(--deep-orange); }
+        .ended-stat .lbl { font-size: 10px; color: #999; margin-top: 2px; }
+
+        /* 翻卡动画 */
+        .flip-card.flipped { animation: flipIn 0.5s ease; }
+        @keyframes flipIn {
+            0% { transform: rotateY(180deg); }
+            100% { transform: rotateY(0); }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.85) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes pulseNFC { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+        @keyframes pulseFire { 0%,100%{transform:scale(1);} 50%{transform:scale(1.15) rotate(-5deg);} }
+        @keyframes pulseToday { 0%,100%{box-shadow:0 0 0 0 rgba(230,126,0,0.4);} 50%{box-shadow:0 0 0 6px rgba(230,126,0,0);} }
+
+        @media (max-width: 420px) {
+            .phone { width: 100%; border-radius: 0; border: none; min-height: 100vh; max-height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone">
+    <!-- 顶部 -->
+    <div class="phone-header">
+        <button class="header-back" id="headerBack" onclick="goBack()">←</button>
+        <div class="header-icon" id="headerIcon">🏬</div>
+        <div class="header-info">
+            <div class="header-title" id="headerTitle">线下活动中心</div>
+            <div class="header-sub" id="headerSub">朝阳大悦城 · NFC碰一碰专区</div>
+        </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="phone-body" id="phoneBody">
+
+        <!-- ===== 首页 ===== -->
+        <div class="page active" id="homePage">
+            <!-- 点位 Banner（含连续碰卡奖励） -->
+            <div class="store-banner">
+                <div class="banner-top">
+                    <div class="banner-icon">📳</div>
+                    <div class="banner-text">
+                        <h2>NFC 碰一碰</h2>
+                        <p>将手机靠近门店 NFC 标识参与活动<br/>赢取游戏专属好礼</p>
+                        <span class="banner-tag">📍 朝阳大悦城 · B1层</span>
+                    </div>
+                </div>
+                <div class="streak-card" onclick="openStreakDetail()">
+                    <div class="streak-fire">🔥</div>
+                    <div class="streak-info">
+                        <div class="streak-title">本门店连续碰卡 <span id="streakDays">3</span> 天</div>
+                        <div class="streak-sub">再连 <span id="streakNeed">4</span> 天领限定皮肤</div>
+                        <div class="streak-progress" id="streakProgress"></div>
+                    </div>
+                    <div class="streak-go">领奖 ➤</div>
+                </div>
+            </div>
+
+            <!-- 游戏分类 -->
+            <div class="game-tags-section">
+                <div class="section-header">
+                    <span class="section-title">🎮 游戏活动</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="section-count" id="activityCount"></span>
+                        <button class="nearby-toggle" id="nearbyToggle" onclick="toggleNearby()">📍 附近活动推荐</button>
+                    </div>
+                </div>
+                <div class="game-tags" id="gameTags"></div>
+            </div>
+
+            <!-- 附近活动推荐列表（折叠） -->
+            <div class="nearby-collapse" id="nearbyCollapse" style="display:none;">
+                <div class="nearby-collapse-hint">根据你的位置推荐 1.5km 内的可碰卡门店</div>
+                <div id="nearbyList"></div>
+            </div>
+
+            <!-- 活动卡片列表 -->
+            <div id="activityList"></div>
+        </div>
+
+        <!-- ===== 我的 ===== -->
+        <div class="page" id="minePage">
+            <div class="mine-section" id="historySection">
+                <div class="mine-section-header">
+                    <div class="mine-section-title">
+                        <span class="sec-icon" style="background:linear-gradient(135deg,rgba(0,200,83,0.1),rgba(0,230,118,0.06));">📋</span>
+                        历史参与
+                    </div>
+                    <span class="mine-count" id="historyCount">0</span>
+                </div>
+                <div id="historyList"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无参与记录</div><div class="empty-sub">去首页参与感兴趣的活动吧</div></div></div>
+            </div>
+            <div class="mine-section" id="interestSection">
+                <div class="mine-section-header">
+                    <div class="mine-section-title">
+                        <span class="sec-icon" style="background:linear-gradient(135deg,rgba(255,140,0,0.1),rgba(255,140,0,0.06));">❤️</span>
+                        感兴趣的游戏
+                    </div>
+                </div>
+                <div class="game-grid" id="interestGrid"></div>
+            </div>
+            <div class="mine-section" id="favSection">
+                <div class="mine-section-header">
+                    <div class="mine-section-title">
+                        <span class="sec-icon" style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,215,0,0.06));">⭐</span>
+                        收藏活动
+                    </div>
+                    <span class="mine-count" id="favCount">0</span>
+                </div>
+                <div id="favList"><div class="empty-state"><div class="empty-icon">💫</div><div class="empty-text">暂无收藏活动</div><div class="empty-sub">浏览活动时点击 ⭐ 即可收藏</div></div></div>
+            </div>
+            <div class="mine-section" id="couponSection">
+                <div class="mine-section-header">
+                    <div class="mine-section-title">
+                        <span class="sec-icon" style="background:linear-gradient(135deg,rgba(255,107,53,0.1),rgba(255,107,53,0.06));">🎫</span>
+                        卡包 / 已领券
+                    </div>
+                    <span class="mine-count" id="couponCount">0</span>
+                </div>
+                <div id="couponList"><div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-text">暂无已领券</div><div class="empty-sub">参与活动即可获得奖励券</div></div></div>
+            </div>
+            <button class="clear-btn" onclick="confirmClearAll()">🗑️ 清空所有记录（演示用）</button>
+        </div>
+
+        <!-- ===== 详情页 ===== -->
+        <div class="page" id="detailPage"></div>
+    </div>
+
+    <!-- 底部 Tab -->
+    <div class="bottom-tab" id="bottomTab">
+        <button class="tab-item active" id="tabHome" onclick="switchTab('home')">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-label">首页</span>
+        </button>
+        <button class="tab-item" id="tabMine" onclick="switchTab('mine')">
+            <span class="tab-icon">👤</span>
+            <span class="tab-label">我的</span>
+        </button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 核销确认弹窗 -->
+<div class="modal-overlay" id="useModal">
+    <div class="modal-popup">
+        <div class="modal-emoji" id="modalEmoji">🎫</div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-desc" id="modalDesc"></div>
+        <button class="modal-btn" onclick="confirmUseCoupon()">确认核销</button>
+        <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+    </div>
+</div>
+
+<!-- 通用操作弹窗（碰卡/翻卡/加入等） -->
+<div class="modal-overlay" id="actionModal">
+    <div class="modal-popup">
+        <div class="modal-emoji" id="actionEmoji">📳</div>
+        <div class="modal-title" id="actionTitle"></div>
+        <div class="modal-desc" id="actionDesc"></div>
+        <button class="modal-btn" id="actionConfirm">确认</button>
+        <button class="modal-btn cancel" onclick="closeActionModal()">取消</button>
+    </div>
+</div>
+
+<script>
+// ==================== 模拟数据 ====================
+// 活动 type 取值：
+//   collect_word    集字
+//   continuous      连续打卡
+//   multi_store     多店打卡
+//   cross_game      跨游戏推荐/组队
+//   normal          普通限时活动
+//   flip_card       翻卡/集章
+//   ended           已结束（回顾）
+const MOCK_ACTIVITIES = [
+    {
+        id: 'act_1', type: 'collect_word', game: '王者荣耀', icon: '👑',
+        iconBg: 'linear-gradient(135deg, #2c1654, #4a2a8a)',
+        title: 'NFC集字挑战赛', reward: '💎 钻石×200 + 限定皮肤体验卡',
+        status: 'going', endTime: '2026.08.15', day: 'DAY 12',
+        desc: '碰卡集齐6种字卡（挑/战/者/皆/王/者），赢限定皮肤',
+        words: ['挑', '战', '者', '皆', '王', '者']
+    },
+    {
+        id: 'act_2', type: 'continuous', game: '王者荣耀', icon: '👑',
+        iconBg: 'linear-gradient(135deg, #2c1654, #4a2a8a)',
+        title: '召唤师峡谷打卡', reward: '🎁 英雄体验卡×3 + 铭文碎片×100',
+        status: 'going', endTime: '2026.08.30',
+        desc: '每日到店碰卡，累计7天可领峡谷宝箱',
+        targetDays: 7
+    },
+    {
+        id: 'act_3', type: 'multi_store', game: '和平精英', icon: '🛡️',
+        iconBg: 'linear-gradient(135deg, #1a3a1a, #2d6a2d)',
+        title: '绝地求生打卡有礼', reward: '🎖️ 赛季通行证经验×500',
+        status: 'going', endTime: '2026.08.20',
+        desc: '前往3家合作门店碰卡，赢专属空投补给',
+        stores: [
+            { name: 'coco都可 · 望京店', addr: '朝阳区望京SOHO T1 1F', dist: 480, checked: true },
+            { name: '古茗 · 国贸店', addr: '朝阳区建国门外大街1号', dist: 780, checked: true },
+            { name: '蜜雪冰城 · 双井店', addr: '朝阳区广渠路66号院', dist: 1200, checked: false }
+        ]
+    },
+    {
+        id: 'act_4', type: 'cross_game', game: '和平精英', icon: '🛡️',
+        iconBg: 'linear-gradient(135deg, #1a3a1a, #2d6a2d)',
+        title: '战队集结令', reward: '👕 限定战队服装 + 枪械皮肤',
+        status: 'soon', endTime: '2026.08.10',
+        desc: '3人组队碰卡，自动推荐队友其他游戏活动',
+        members: 2, maxMembers: 3,
+        crossGames: [
+            { name: '王者荣耀', icon: '👑', desc: '同时可参与集字挑战' },
+            { name: 'QQ飞车', icon: '🏎️', desc: '同时可参与线下赛' }
+        ]
+    },
+    {
+        id: 'act_5', type: 'normal', game: 'QQ飞车', icon: '🏎️',
+        iconBg: 'linear-gradient(135deg, #4a1a2a, #8a2a4a)',
+        title: '极速狂飙线下赛', reward: '🏆 限定赛车涂装 + 氮气卡×3',
+        status: 'going', endTime: '2026.08.25',
+        desc: '碰卡参与赛道计时挑战，刷新纪录可多领奖励',
+        participants: 326, slots: 500
+    },
+    {
+        id: 'act_6', type: 'normal', game: '英雄联盟手游', icon: '⚔️',
+        iconBg: 'linear-gradient(135deg, #1a2a4a, #2a4a8a)',
+        title: '峡谷之巅挑战', reward: '🎭 随机英雄皮肤碎片×5',
+        status: 'soon', endTime: '2026.09.01',
+        desc: '到店碰卡激活联盟挑战任务'
+    },
+    {
+        id: 'act_7', type: 'flip_card', game: '火影忍者', icon: '🔥',
+        iconBg: 'linear-gradient(135deg, #4a1a1a, #8a2a2a)',
+        title: '忍者之路集章', reward: '🍥 限定忍者头像框 + 忍具',
+        status: 'going', endTime: '2026.08.18',
+        desc: '碰卡翻牌收集5种印章，集齐兑换限定奖励',
+        stamps: ['🍥', '⛩️', '🗡️', '🛡️', '👹']
+    },
+    {
+        id: 'act_8', type: 'ended', game: '穿越火线', icon: '🔫',
+        iconBg: 'linear-gradient(135deg, #2a2a2a, #4a4a4a)',
+        title: '火力全开线下打卡', reward: '💣 手雷皮肤 + 军械库钥匙',
+        status: 'end', endTime: '2026.07.20',
+        desc: '活动已结束，敬请期待下一期',
+        stats: { participants: 1280, coupons: 4580, completed: 892 }
+    }
+];
+
+// 附近门店数据（模拟）
+const NEARBY_STORES = [
+    { id: 'st_1', name: 'coco都可 · 望京SOHO店', emoji: '🧋', games: ['王者荣耀', '和平精英'], dist: 320, hot: true },
+    { id: 'st_2', name: '古茗 · 国贸店', emoji: '🍵', games: ['QQ飞车', '王者荣耀'], dist: 580, hot: false },
+    { id: 'st_3', name: '蜜雪冰城 · 双井店', emoji: '🍦', games: ['火影忍者', '穿越火线'], dist: 980, hot: true }
+];
+
+const ALL_GAMES = [
+    { name: '全部', icon: '🎮' },
+    { name: '王者荣耀', icon: '👑' },
+    { name: '和平精英', icon: '🛡️' },
+    { name: 'QQ飞车', icon: '🏎️' },
+    { name: '英雄联盟手游', icon: '⚔️' },
+    { name: '火影忍者', icon: '🔥' },
+    { name: '穿越火线', icon: '🔫' }
+];
+
+// 类型标签映射
+const TYPE_META = {
+    collect_word: { label: '集字', cls: 'collect' },
+    continuous: { label: '连续打卡', cls: 'continuous' },
+    multi_store: { label: '多店打卡', cls: 'multi' },
+    cross_game: { label: '跨游戏', cls: 'cross' },
+    flip_card: { label: '翻卡', cls: 'flip' },
+    team: { label: '组队', cls: 'team' },
+    normal: { label: '限时', cls: 'normal' },
+    ended: { label: '已结束', cls: '' }
+};
+
+// ==================== localStorage ====================
+const STORAGE_KEY = 'offline_point_app_v2';
+
+function loadData() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return {
+        participated: [], favorites: [], interestedGames: [], coupons: [],
+        streak: { days: 3, lastDate: null, checkedDays: [1, 2, 3] },
+        collectedWords: { 'act_1': [0, 1, 4] },
+        stamps: { 'act_7': [0, 1] },
+        multiStoreCheck: { 'act_3': [0, 1] }
+    };
+}
+
+function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+let appData = loadData();
+
+// ==================== 页面状态 ====================
+let currentTab = 'home';
+let currentGameFilter = '全部';
+let currentDetail = null;
+let pendingAction = null;
+
+// ==================== Toast ====================
+let toastTimer;
+function showToast(msg, dur = 2200) {
+    const t = document.getElementById('toast');
+    t.innerHTML = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ==================== Tab 切换 ====================
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('homePage').classList.toggle('active', tab === 'home');
+    document.getElementById('minePage').classList.toggle('active', tab === 'mine');
+    document.getElementById('detailPage').classList.remove('active');
+    document.getElementById('tabHome').classList.toggle('active', tab === 'home');
+    document.getElementById('tabMine').classList.toggle('active', tab === 'mine');
+    document.getElementById('bottomTab').classList.remove('hidden');
+    document.getElementById('headerBack').classList.remove('show');
+    document.getElementById('headerIcon').textContent = '🏬';
+
+    if (tab === 'home') {
+        document.getElementById('headerTitle').textContent = '线下活动中心';
+        document.getElementById('headerSub').textContent = '朝阳大悦城 · NFC碰一碰专区';
+    } else {
+        document.getElementById('headerTitle').textContent = '我的';
+        document.getElementById('headerSub').textContent = '账户 / 活动 / 卡包';
+        renderMinePage();
+    }
+    currentDetail = null;
+    document.getElementById('phoneBody').scrollTop = 0;
+}
+
+function goBack() {
+    if (currentDetail) switchTab('home');
+}
+
+// ==================== 首页：连续碰卡 Banner ====================
+function renderStreakBanner() {
+    const target = 7;
+    const days = appData.streak.days;
+    const need = Math.max(0, target - days);
+    document.getElementById('streakDays').textContent = days;
+    document.getElementById('streakNeed').textContent = need;
+    const dots = document.getElementById('streakProgress');
+    dots.innerHTML = '';
+    for (let i = 0; i < target; i++) {
+        const d = document.createElement('div');
+        d.className = 'streak-dot' + (i < days ? ' done' : '');
+        dots.appendChild(d);
+    }
+}
+
+function openStreakDetail() {
+    // 模拟"今日碰卡"行为：增加连续天数
+    const today = new Date().toDateString();
+    if (appData.streak.lastDate === today) {
+        showToast('✅ 今日已碰卡，明天继续来！');
+        return;
+    }
+    if (appData.streak.lastDate) {
+        const yest = new Date(Date.now() - 86400000).toDateString();
+        if (appData.streak.lastDate === yest) {
+            appData.streak.days = Math.min(7, appData.streak.days + 1);
+        } else {
+            appData.streak.days = 1;
+        }
+    } else {
+        appData.streak.days = 1;
+    }
+    appData.streak.lastDate = today;
+    if (!appData.streak.checkedDays.includes(appData.streak.days)) {
+        appData.streak.checkedDays.push(appData.streak.days);
+    }
+    saveData();
+    renderStreakBanner();
+    if (appData.streak.days >= 7) {
+        showToast('🎉 已完成7天连续碰卡！限定皮肤已发放至卡包');
+        appData.coupons.push({
+            id: 'cp_streak_' + Date.now(),
+            activityName: '本门店连续碰卡7天',
+            reward: '🦸 限定皮肤体验卡×1',
+            game: '全游戏', icon: '🔥',
+            iconBg: 'linear-gradient(135deg, #ff6b35, #ff8c00)',
+            status: 'unused', earnedAt: new Date().toLocaleDateString('zh-CN')
+        });
+        saveData();
+        appData.streak.days = 0;
+        saveData();
+        renderStreakBanner();
+    } else {
+        showToast(`🔥 连续碰卡 ${appData.streak.days} 天！再接再厉`);
+    }
+}
+
+// ==================== 首页渲染 ====================
+function getFilteredActivities() {
+    if (currentGameFilter === '全部') return MOCK_ACTIVITIES;
+    return MOCK_ACTIVITIES.filter(a => a.game === currentGameFilter);
+}
+
+function renderGameTags() {
+    const container = document.getElementById('gameTags');
+    container.innerHTML = ALL_GAMES.map(g => `
+        <div class="game-tag ${g.name === currentGameFilter ? 'active' : ''}"
+             onclick="filterByGame('${g.name}')">${g.icon} ${g.name}</div>
+    `).join('');
+}
+
+function filterByGame(name) {
+    currentGameFilter = name;
+    renderGameTags();
+    renderActivityList();
+}
+
+function renderActivityList() {
+    const list = document.getElementById('activityList');
+    const activities = getFilteredActivities();
+    document.getElementById('activityCount').textContent = `共 ${activities.length} 个活动`;
+
+    if (activities.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">该分类暂无活动</div></div>';
+        return;
+    }
+
+    list.innerHTML = activities.map(a => {
+        const isFav = appData.favorites.includes(a.id);
+        const isJoin = appData.participated.includes(a.id);
+        const meta = TYPE_META[a.type] || {};
+        let statusHTML = '', btnHTML = '';
+        if (a.status === 'going') {
+            statusHTML = '<span class="status-tag status-going">🟢 进行中</span>';
+            btnHTML = isJoin
+                ? '<button class="btn-join joined">✅ 已参与</button>'
+                : `<button class="btn-join" onclick="event.stopPropagation();joinActivity('${a.id}')">🎮 立即参与</button>`;
+        } else if (a.status === 'soon') {
+            statusHTML = '<span class="status-tag status-soon">🟠 即将开始</span>';
+            btnHTML = '<button class="btn-join soon">⏳ ' + a.endTime + ' 开</button>';
+        } else {
+            statusHTML = '<span class="status-tag status-end">⚪ 已结束</span>';
+            btnHTML = '<button class="btn-join ended">已结束</button>';
+        }
+
+        return `
+        <div class="activity-card" onclick="openDetail('${a.id}')">
+            <span class="type-tag ${meta.cls || ''}">${meta.label || ''}</span>
+            <div class="activity-head">
+                <div class="activity-game-icon" style="background:${a.iconBg};">${a.icon}</div>
+                <div class="activity-info">
+                    <div class="activity-game-name">${a.icon} ${a.game}</div>
+                    <div class="activity-title">${a.title}</div>
+                    <div class="activity-reward">🎁 ${a.reward}</div>
+                </div>
+            </div>
+            <div class="activity-footer">
+                ${statusHTML}
+                <div class="action-btns">
+                    <button class="fav-btn ${isFav ? 'faved' : ''}"
+                            onclick="event.stopPropagation();toggleFav('${a.id}')"
+                            title="${isFav ? '取消收藏' : '收藏活动'}">
+                        <span class="star-icon">${isFav ? '⭐' : '☆'}</span>
+                    </button>
+                    ${btnHTML}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ==================== 参与活动 ====================
+function joinActivity(actId) {
+    if (appData.participated.includes(actId)) return;
+    const act = MOCK_ACTIVITIES.find(a => a.id === actId);
+    if (!act || act.status !== 'going') return;
+
+    appData.participated.push(actId);
+    appData.coupons.push({
+        id: 'cp_' + Date.now(),
+        activityName: act.title,
+        reward: act.reward, game: act.game,
+        icon: act.icon, iconBg: act.iconBg,
+        status: 'unused', earnedAt: new Date().toLocaleDateString('zh-CN')
+    });
+    if (!appData.interestedGames.includes(act.game)) {
+        appData.interestedGames.push(act.game);
+    }
+    saveData();
+    renderActivityList();
+    showToast(`🎉 已参与「${act.title}」！奖励券已发放至卡包`);
+}
+
+// ==================== 收藏 ====================
+function toggleFav(actId) {
+    const idx = appData.favorites.indexOf(actId);
+    if (idx > -1) { appData.favorites.splice(idx, 1); showToast('已取消收藏'); }
+    else { appData.favorites.push(actId); showToast('⭐ 已收藏活动'); }
+    saveData();
+    renderActivityList();
+}
+
+// ==================== 详情页 ====================
+function openDetail(actId) {
+    const act = MOCK_ACTIVITIES.find(a => a.id === actId);
+    if (!act) return;
+    currentDetail = actId;
+
+    // 切换页面
+    document.getElementById('homePage').classList.remove('active');
+    document.getElementById('minePage').classList.remove('active');
+    document.getElementById('detailPage').classList.add('active');
+    document.getElementById('tabHome').classList.remove('active');
+    document.getElementById('tabMine').classList.remove('active');
+    document.getElementById('bottomTab').classList.add('hidden');
+    document.getElementById('headerBack').classList.add('show');
+    document.getElementById('headerIcon').textContent = act.icon;
+    document.getElementById('headerTitle').textContent = '活动详情';
+    document.getElementById('headerSub').textContent = act.game + ' · ' + (TYPE_META[act.type]?.label || '活动');
+
+    const page = document.getElementById('detailPage');
+    const isFav = appData.favorites.includes(act.id);
+    const isJoin = appData.participated.includes(act.id);
+
+    page.innerHTML = `
+        <div class="detail-hero">
+            <div class="detail-hero-top">
+                <div class="detail-hero-icon" style="background:${act.iconBg};">${act.icon}</div>
+                <div class="detail-hero-text">
+                    <div class="detail-hero-game">${act.icon} ${act.game}</div>
+                    <div class="detail-hero-title">${act.title}</div>
+                </div>
+            </div>
+            <div class="detail-hero-meta">
+                <span class="detail-meta-pill">${act.status === 'going' ? '🟢 进行中' : act.status === 'soon' ? '🟠 即将开始' : '⚪ 已结束'}</span>
+                <span class="detail-meta-pill">📅 截止 ${act.endTime}</span>
+                <span class="detail-meta-pill">${TYPE_META[act.type]?.label || '活动'}</span>
+            </div>
+        </div>
+
+        <div class="detail-info-card">
+            <div class="detail-info-title">📖 玩法说明</div>
+            <div class="detail-info-desc">${act.desc}</div>
+        </div>
+
+        <div class="detail-reward-card">
+            <div class="detail-reward-emoji">🎁</div>
+            <div class="detail-reward-info">
+                <div class="detail-reward-label">活动奖励</div>
+                <div class="detail-reward-text">${act.reward}</div>
+            </div>
+        </div>
+
+        <div id="detailContent"></div>
+
+        <div class="detail-bottom-bar">
+            <button class="detail-btn-secondary ${isFav ? 'faved' : ''}"
+                    onclick="toggleFav('${act.id}');openDetail('${act.id}');">${isFav ? '⭐' : '☆'}</button>
+            ${renderDetailBottomBtn(act, isJoin)}
+        </div>
+    `;
+
+    // 根据 type 渲染专属内容
+    const content = document.getElementById('detailContent');
+    switch (act.type) {
+        case 'collect_word': content.innerHTML = renderCollectWord(act); break;
+        case 'continuous':   content.innerHTML = renderContinuous(act); break;
+        case 'multi_store':  content.innerHTML = renderMultiStore(act); break;
+        case 'cross_game':   content.innerHTML = renderCrossGame(act); break;
+        case 'normal':       content.innerHTML = renderNormal(act); break;
+        case 'flip_card':    content.innerHTML = renderFlipCard(act); break;
+        case 'ended':        content.innerHTML = renderEnded(act); break;
+    }
+    document.getElementById('phoneBody').scrollTop = 0;
+}
+
+function renderDetailBottomBtn(act, isJoin) {
+    if (act.status === 'end') {
+        return `<button class="detail-btn-primary" disabled>活动已结束</button>`;
+    }
+    if (act.status === 'soon') {
+        return `<button class="detail-btn-primary" onclick="showActionModal('🔔','预约提醒','活动开始后将第一时间通知你',()=>{showToast('✅ 已预约，开服前将通知你');closeActionModal();})">预约提醒</button>`;
+    }
+    if (isJoin) {
+        return `<button class="detail-btn-primary" disabled>✅ 已参与</button>`;
+    }
+    return `<button class="detail-btn-primary" onclick="joinActivity('${act.id}');openDetail('${act.id}');">🎮 立即参与</button>`;
+}
+
+// ===== 集字详情 =====
+function renderCollectWord(act) {
+    const owned = appData.collectedWords[act.id] || [];
+    const target = 6;
+    const collected = owned.length;
+    const allDone = collected >= target;
+    return `
+        <div class="detail-info-card">
+            <div class="detail-info-title">🎯 集字进度 <span style="color:var(--deep-orange);">${collected}/${target}</span></div>
+            <div class="word-grid">
+                ${act.words.map((w, i) => `
+                    <div class="word-card ${owned.includes(i) ? 'owned' : ''}">
+                        <div class="word-char">${w}</div>
+                        <div class="word-label">${owned.includes(i) ? '已集齐' : '未集齐'}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="lottery-section">
+            <h4>🎰 每日免费抽字卡</h4>
+            <p>今日剩余 ${allDone ? 0 : Math.max(0, 3 - (appData.dailyDraw || 0))} 次</p>
+            <button class="lottery-btn" onclick="doLottery('${act.id}')" ${allDone ? 'disabled' : ''}>
+                ${allDone ? '已集齐全部字卡' : '📳 碰卡抽字'}
+            </button>
+        </div>
+    `;
+}
+
+function doLottery(actId) {
+    const act = MOCK_ACTIVITIES.find(a => a.id === actId);
+    if (!act) return;
+    if (!appData.collectedWords[actId]) appData.collectedWords[actId] = [];
+    const owned = appData.collectedWords[actId];
+    const missing = act.words.map((_, i) => i).filter(i => !owned.includes(i));
+    if (missing.length === 0) {
+        showToast('🎉 已集齐全部字卡！请到游戏内领取大奖');
+        return;
+    }
+    const got = missing[Math.floor(Math.random() * missing.length)];
+    owned.push(got);
+    appData.dailyDraw = (appData.dailyDraw || 0) + 1;
+    saveData();
+    openDetail(actId);
+    showToast(`🎉 抽到字卡「<strong>${act.words[got]}</strong>」！`);
+}
+
+// ===== 连续打卡详情 =====
+function renderContinuous(act) {
+    const target = act.targetDays || 7;
+    const checkedDays = appData.streak.checkedDays || [];
+    const today = new Date().getDay();
+    let cells = '';
+    for (let i = 1; i <= target; i++) {
+        const done = checkedDays.includes(i);
+        const isToday = i === Math.min(target, appData.streak.days + 1);
+        let cls = 'day-cell', label = `第${i}天`;
+        let reward = '';
+        if (i === 3) reward = '铭文';
+        if (i === 5) reward = '皮肤';
+        if (i === 7) reward = '大奖';
+        if (done) cls += ' done';
+        else if (isToday) cls += ' today';
+        cells += `<div class="${cls}">
+            <div class="day-num">${done ? '✓' : i}</div>
+            <div class="day-label">${label}</div>
+            ${reward ? `<div class="day-reward">${reward}</div>` : ''}
+        </div>`;
+    }
+    return `
+        <div class="detail-info-card">
+            <div class="detail-info-title">📅 连续打卡日历 <span style="color:var(--deep-orange);">${appData.streak.days}/${target} 天</span></div>
+            <div class="calendar-grid">${cells}</div>
+        </div>
+        <div class="detail-info-card" style="background:linear-gradient(135deg,rgba(0,200,83,0.06),rgba(0,230,118,0.02));border-color:rgba(0,200,83,0.2);">
+            <div class="detail-info-title" style="color:#00c853;">💡 连续打卡奖励</div>
+            <div class="detail-info-desc">
+                · 第 3 天：铭文碎片×50<br/>
+                · 第 5 天：英雄体验卡×1<br/>
+                · 第 7 天：限定峡谷宝箱（含永久皮肤）
+            </div>
+        </div>
+    `;
+}
+
+// ===== 多店打卡详情 =====
+function renderMultiStore(act) {
+    const checked = appData.multiStoreCheck[act.id] || act.stores.map((_, i) => i === 0).filter(() => false);
+    return `
+        <div class="detail-info-card">
+            <div class="detail-info-title">🏪 附近可碰卡门店 <span style="color:var(--deep-orange);">${act.stores.filter((_, i) => checked.includes(i)).length}/${act.stores.length}</span></div>
+            <div class="multi-store-list">
+                ${act.stores.map((s, i) => {
+                    const isChecked = checked.includes(i);
+                    return `
+                    <div class="multi-store-item ${isChecked ? 'checked' : ''}" onclick="toggleMultiStore('${act.id}', ${i})">
+                        <div class="multi-store-rank">${isChecked ? '✓' : i + 1}</div>
+                        <div class="multi-store-info">
+                            <div class="multi-store-name">${s.name}</div>
+                            <div class="multi-store-addr">${s.addr}</div>
+                            <div class="multi-store-dist">📍 ${s.dist}m</div>
+                        </div>
+                        <div class="multi-store-check">${isChecked ? '✓' : '○'}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>
+        <div class="detail-info-card" style="background:linear-gradient(135deg,rgba(25,118,210,0.06),rgba(66,165,245,0.02));border-color:rgba(25,118,210,0.2);">
+            <div class="detail-info-title" style="color:#1976d2;">🎁 集齐奖励</div>
+            <div class="detail-info-desc">集齐 ${act.stores.length} 家门店碰卡，自动到账 <strong>${act.reward}</strong></div>
+        </div>
+    `;
+}
+
+function toggleMultiStore(actId, storeIdx) {
+    if (!appData.multiStoreCheck[actId]) appData.multiStoreCheck[actId] = [];
+    const arr = appData.multiStoreCheck[actId];
+    const idx = arr.indexOf(storeIdx);
+    if (idx > -1) {
+        arr.splice(idx, 1);
+        showToast('已取消该门店碰卡');
+    } else {
+        arr.push(storeIdx);
+        showToast('✅ 碰卡成功！');
+        // 自动核发券
+        const act = MOCK_ACTIVITIES.find(a => a.id === actId);
+        if (act && act.stores.every((_, i) => arr.includes(i))) {
+            if (!appData.participated.includes(actId)) {
+                appData.participated.push(actId);
+                appData.coupons.push({
+                    id: 'cp_multi_' + Date.now(),
+                    activityName: act.title + '（多店集齐）',
+                    reward: act.reward, game: act.game,
+                    icon: act.icon, iconBg: act.iconBg,
+                    status: 'unused', earnedAt: new Date().toLocaleDateString('zh-CN')
+                });
+                saveData();
+                showToast('🎉 已集齐所有门店！' + act.reward + ' 已到账卡包');
+            }
+        }
+    }
+    saveData();
+    openDetail(actId);
+}
+
+// ===== 跨游戏详情 =====
+function renderCrossGame(act) {
+    const memberCount = act.members || 1;
+    const maxMembers = act.maxMembers || 3;
+    const slots = [];
+    for (let i = 0; i < maxMembers; i++) {
+        if (i < memberCount) {
+            slots.push(`<div class="team-avatar">${['😎', '🤩', '😄'][i]}</div>`);
+        } else {
+            slots.push(`<div class="team-avatar empty">+</div>`);
+        }
+    }
+    return `
+        <div class="team-section">
+            <h4>👥 组队碰卡 <span style="color:#999;font-size:12px;font-weight:500;">${memberCount}/${maxMembers}</span></h4>
+            <div class="team-members">${slots.join('')}</div>
+            <button class="btn-join" style="width:100%;background:linear-gradient(135deg,#7b1fa2,#ba68c8);"
+                    onclick="showActionModal('🤝','邀请好友','分享给好友一起组队碰卡，组队奖励翻倍',()=>{showToast('✅ 邀请链接已复制');closeActionModal();})">
+                邀请好友
+            </button>
+        </div>
+
+        <div class="detail-info-card">
+            <div class="detail-info-title">🎮 跨游戏推荐</div>
+            <div class="detail-info-desc" style="margin-bottom:10px;">同时参与这些游戏活动，奖励更丰厚 ↓</div>
+            ${(act.crossGames || []).map(g => `
+                <div class="cross-game-card" onclick="filterByGameAndOpen('${g.name}')">
+                    <div class="cross-game-icon" style="background:linear-gradient(135deg,rgba(123,31,162,0.1),rgba(186,104,200,0.05));">${g.icon}</div>
+                    <div class="cross-game-info">
+                        <div class="cross-game-name">${g.name}</div>
+                        <div class="cross-game-desc">${g.desc}</div>
+                    </div>
+                    <div class="cross-game-arrow">→</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function filterByGameAndOpen(gameName) {
+    switchTab('home');
+    filterByGame(gameName);
+}
+
+// ===== 普通详情 =====
+function renderNormal(act) {
+    if (act.participants) {
+        return `
+            <div class="detail-info-card">
+                <div class="detail-info-title">📊 实时数据</div>
+                <div class="ended-stats">
+                    <div class="ended-stat">
+                        <div class="num">${act.participants}</div>
+                        <div class="lbl">已报名</div>
+                    </div>
+                    <div class="ended-stat">
+                        <div class="num">${act.slots - act.participants}</div>
+                        <div class="lbl">剩余名额</div>
+                    </div>
+                    <div class="ended-stat">
+                        <div class="num">${Math.round(act.participants / act.slots * 100)}%</div>
+                        <div class="lbl">进度</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    return `
+        <div class="detail-info-card" style="background:linear-gradient(135deg,rgba(255,140,0,0.06),rgba(255,140,0,0.02));border-color:rgba(255,140,0,0.2);">
+            <div class="detail-info-title" style="color:var(--deep-orange);">⏰ 开服提醒</div>
+            <div class="detail-info-desc">活动将于 <strong>${act.endTime}</strong> 开启，到时将自动提醒你可参与</div>
+        </div>
+    `;
+}
+
+// ===== 翻卡详情 =====
+function renderFlipCard(act) {
+    const flipped = appData.stamps[act.id] || [];
+    return `
+        <div class="detail-info-card">
+            <div class="detail-info-title">🎴 印章收集 <span style="color:var(--deep-orange);">${flipped.length}/${act.stamps.length}</span></div>
+            <div class="flip-grid">
+                ${act.stamps.map((s, i) => `
+                    <div class="flip-card ${flipped.includes(i) ? 'flipped' : ''}"
+                         onclick="flipStamp('${act.id}', ${i})">${flipped.includes(i) ? s : '?'}</div>
+                `).join('')}
+            </div>
+        </div>
+        <div class="lottery-section">
+            <h4>📳 碰卡翻牌</h4>
+            <p>集齐 ${act.stamps.length} 枚印章兑换 ${act.reward}</p>
+            <button class="lottery-btn" onclick="flipRandomStamp('${act.id}')">立即碰卡翻牌</button>
+        </div>
+    `;
+}
+
+function flipStamp(actId, idx) {
+    if (!appData.stamps[actId]) appData.stamps[actId] = [];
+    const arr = appData.stamps[actId];
+    const i = arr.indexOf(idx);
+    if (i > -1) arr.splice(i, 1);
+    else arr.push(idx);
+    saveData();
+    openDetail(actId);
+    checkStampComplete(actId);
+}
+
+function flipRandomStamp(actId) {
+    if (!appData.stamps[actId]) appData.stamps[actId] = [];
+    const act = MOCK_ACTIVITIES.find(a => a.id === actId);
+    if (!act) return;
+    const missing = act.stamps.map((_, i) => i).filter(i => !appData.stamps[actId].includes(i));
+    if (missing.length === 0) { showToast('已集齐全部印章！请到游戏内领奖'); return; }
+    const got = missing[Math.floor(Math.random() * missing.length)];
+    appData.stamps[actId].push(got);
+    saveData();
+    openDetail(actId);
+    showToast(`🎉 翻到印章「<strong>${act.stamps[got]}</strong>」`);
+    checkStampComplete(actId);
+}
+
+function checkStampComplete(actId) {
+    const act = MOCK_ACTIVITIES.find(a => a.id === actId);
+    if (!act) return;
+    const flipped = appData.stamps[actId] || [];
+    if (flipped.length >= act.stamps.length) {
+        if (!appData.participated.includes(actId)) {
+            appData.participated.push(actId);
+            appData.coupons.push({
+                id: 'cp_flip_' + Date.now(),
+                activityName: act.title + '（集齐印章）',
+                reward: act.reward, game: act.game,
+                icon: act.icon, iconBg: act.iconBg,
+                status: 'unused', earnedAt: new Date().toLocaleDateString('zh-CN')
+            });
+            saveData();
+            showToast('🎉 集齐印章！' + act.reward + ' 已到账卡包');
+        }
+    }
+}
+
+// ===== 已结束详情 =====
+function renderEnded(act) {
+    return `
+        <div class="ended-summary">
+            <div style="font-size:13px;color:#999;">活动已结束</div>
+            <div class="big-num">${act.endTime}</div>
+            <div class="label">结束时间</div>
+            <div class="ended-stats">
+                <div class="ended-stat">
+                    <div class="num">${act.stats.participants}</div>
+                    <div class="lbl">参与人数</div>
+                </div>
+                <div class="ended-stat">
+                    <div class="num">${act.stats.coupons}</div>
+                    <div class="lbl">发出券数</div>
+                </div>
+                <div class="ended-stat">
+                    <div class="num">${act.stats.completed}</div>
+                    <div class="lbl">完成任务</div>
+                </div>
+            </div>
+        </div>
+        <div class="detail-info-card">
+            <div class="detail-info-title">💬 期待下一期</div>
+            <div class="detail-info-desc">本活动已圆满结束。点击 <strong>收藏活动</strong>，下一期开启时第一时间通知你</div>
+        </div>
+    `;
+}
+
+// ==================== 我的页面 ====================
+function renderMinePage() {
+    renderHistory();
+    renderInterestGrid();
+    renderFavorites();
+    renderCoupons();
+}
+
+function renderHistory() {
+    const list = document.getElementById('historyList');
+    const historyIds = appData.participated;
+    document.getElementById('historyCount').textContent = historyIds.length;
+    if (historyIds.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无参与记录</div><div class="empty-sub">去首页参与感兴趣的活动吧</div></div>';
+        return;
+    }
+    list.innerHTML = historyIds.map(id => {
+        const a = MOCK_ACTIVITIES.find(x => x.id === id);
+        if (!a) return '';
+        return `
+        <div class="history-item" onclick="openDetail('${a.id}')" style="cursor:pointer;">
+            <div class="hi-icon" style="background:${a.iconBg};">${a.icon}</div>
+            <div class="hi-info">
+                <div class="hi-title">${a.title}</div>
+                <div class="hi-game">${a.game}</div>
+                <div class="hi-time">参与于 ${new Date().toLocaleDateString('zh-CN')}</div>
+            </div>
+            <span style="font-size:11px;color:#00c853;font-weight:700;">✅ 已参与</span>
+        </div>`;
+    }).reverse().join('');
+}
+
+function renderInterestGrid() {
+    const grid = document.getElementById('interestGrid');
+    const games = ALL_GAMES.filter(g => g.name !== '全部');
+    grid.innerHTML = games.map(g => {
+        const isInt = appData.interestedGames.includes(g.name);
+        return `
+        <div class="game-chip ${isInt ? 'interested' : ''}" onclick="toggleInterest('${g.name}')">
+            ${g.icon} ${g.name}
+            <span class="chip-add">${isInt ? '✕' : '+'}</span>
+        </div>`;
+    }).join('');
+}
+
+function toggleInterest(gameName) {
+    const idx = appData.interestedGames.indexOf(gameName);
+    if (idx > -1) { appData.interestedGames.splice(idx, 1); showToast(`已取消对「${gameName}」的关注`); }
+    else { appData.interestedGames.push(gameName); showToast(`❤️ 已关注「${gameName}」`); }
+    saveData();
+    renderInterestGrid();
+}
+
+function renderFavorites() {
+    const list = document.getElementById('favList');
+    document.getElementById('favCount').textContent = appData.favorites.length;
+    if (appData.favorites.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">💫</div><div class="empty-text">暂无收藏活动</div><div class="empty-sub">浏览活动时点击 ⭐ 即可收藏</div></div>';
+        return;
+    }
+    list.innerHTML = appData.favorites.map(id => {
+        const a = MOCK_ACTIVITIES.find(x => x.id === id);
+        if (!a) return '';
+        return `
+        <div class="history-item" style="justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer;" onclick="openDetail('${a.id}')">
+                <div class="hi-icon" style="background:${a.iconBg};">${a.icon}</div>
+                <div class="hi-info">
+                    <div class="hi-title">${a.title}</div>
+                    <div class="hi-game">${a.game}</div>
+                </div>
+            </div>
+            <button class="fav-btn faved" onclick="event.stopPropagation();toggleFavFromMine('${a.id}')" title="取消收藏">
+                <span class="star-icon">⭐</span>
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function toggleFavFromMine(actId) {
+    toggleFav(actId);
+    renderFavorites();
+}
+
+function renderCoupons() {
+    const list = document.getElementById('couponList');
+    document.getElementById('couponCount').textContent = appData.coupons.length;
+    if (appData.coupons.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">🎟️</div><div class="empty-text">暂无已领券</div><div class="empty-sub">参与活动即可获得奖励券</div></div>';
+        return;
+    }
+    list.innerHTML = appData.coupons.map(c => {
+        const used = c.status === 'used';
+        return `
+        <div class="coupon-item" style="opacity:${used ? 0.5 : 1};">
+            <div class="coupon-left">
+                <div class="coupon-icon" style="background:${c.iconBg};">${c.icon}</div>
+                <div class="coupon-info">
+                    <div class="coupon-reward">${c.reward}</div>
+                    <div class="coupon-source">${c.icon} ${c.activityName} · ${c.earnedAt}</div>
+                </div>
+            </div>
+            <button class="btn-use ${used ? 'used' : ''}" onclick="${used ? '' : `showUseModal('${c.id}')`}">${used ? '已核销' : '去使用'}</button>
+        </div>`;
+    }).reverse().join('');
+}
+
+// ==================== 核销弹窗 ====================
+let pendingCouponId = null;
+function showUseModal(couponId) {
+    pendingCouponId = couponId;
+    const c = appData.coupons.find(x => x.id === couponId);
+    if (!c) return;
+    document.getElementById('modalEmoji').textContent = '🎫';
+    document.getElementById('modalTitle').textContent = '核销奖励券';
+    document.getElementById('modalDesc').innerHTML = `<strong>${c.reward}</strong><br/><span style="font-size:12px;color:#999;">${c.activityName}</span>`;
+    document.getElementById('useModal').classList.add('show');
+}
+function closeModal() {
+    document.getElementById('useModal').classList.remove('show');
+    pendingCouponId = null;
+}
+function confirmUseCoupon() {
+    if (!pendingCouponId) return;
+    const c = appData.coupons.find(x => x.id === pendingCouponId);
+    if (c) {
+        c.status = 'used'; saveData();
+        renderCoupons();
+        showToast('✅ 奖励券已核销！请在游戏内查收');
+    }
+    closeModal();
+}
+
+// ==================== 通用操作弹窗 ====================
+function showActionModal(emoji, title, desc, onConfirm) {
+    document.getElementById('actionEmoji').textContent = emoji;
+    document.getElementById('actionTitle').textContent = title;
+    document.getElementById('actionDesc').textContent = desc;
+    pendingAction = onConfirm;
+    document.getElementById('actionConfirm').onclick = onConfirm;
+    document.getElementById('actionModal').classList.add('show');
+}
+function closeActionModal() {
+    document.getElementById('actionModal').classList.remove('show');
+    pendingAction = null;
+}
+
+// ==================== 清空记录 ====================
+function confirmClearAll() {
+    if (confirm('确定要清空所有记录吗？此操作不可撤销。')) {
+        appData = {
+            participated: [], favorites: [], interestedGames: [], coupons: [],
+            streak: { days: 0, lastDate: null, checkedDays: [] },
+            collectedWords: {}, stamps: {}, multiStoreCheck: {}
+        };
+        saveData();
+        renderMinePage();
+        renderActivityList();
+        renderStreakBanner();
+        showToast('🗑️ 所有记录已清空');
+    }
+}
+
+// ==================== 附近活动推荐 ====================
+let nearbyOpen = false;
+function renderNearby() {
+    const list = document.getElementById('nearbyList');
+    list.innerHTML = NEARBY_STORES.map(s => `
+        <div class="nearby-item" onclick="showToast('🗺️ 已打开地图导航：' + '${s.name}')">
+            <div class="nearby-emoji">${s.emoji}</div>
+            <div class="nearby-info">
+                <div class="nearby-name">${s.name}</div>
+                <div class="nearby-meta">
+                    <span>🎮 ${s.games.join(' · ')}</span>
+                    ${s.hot ? '<span>🔥 热门</span>' : ''}
+                </div>
+            </div>
+            <div class="nearby-dist">${s.dist}m</div>
+        </div>
+    `).join('');
+}
+
+function toggleNearby() {
+    nearbyOpen = !nearbyOpen;
+    const box = document.getElementById('nearbyCollapse');
+    const btn = document.getElementById('nearbyToggle');
+    if (nearbyOpen) {
+        box.style.display = 'flex';
+        btn.classList.add('active');
+        btn.textContent = '📍 收起推荐';
+    } else {
+        box.style.display = 'none';
+        btn.classList.remove('active');
+        btn.textContent = '📍 附近活动推荐';
+    }
+}
+
+// ==================== 初始化 ====================
+function init() {
+    renderStreakBanner();
+    renderNearby();
+    renderGameTags();
+    renderActivityList();
+}
+init();
+</script>
+
+</body>
+</html>

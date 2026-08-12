@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>厦门奇妙日 · 多点位打卡有礼</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #ffd700; --orange: #ff8c00; --deep-orange: #e67e00;
+            --red-orange: #ff6b35; --deep-purple: #1a0533;
+            --xiamen-blue: #0ea5e9; --xiamen-cyan: #06b6d4;
+            --online-purple: #8b5cf6; --online-pink: #ec4899;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: #ffffff; color: #2d2d2d;
+            min-height: 100vh; display: flex; justify-content: center; padding: 20px;
+        }
+        .phone {
+            width: 390px; min-height: 750px; background: #f8f8f8;
+            border-radius: 32px; overflow: hidden; border: 3px solid #ddd;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            display: flex; flex-direction: column;
+        }
+        .phone-header {
+            background: #fff; padding: 14px 20px; display: flex;
+            align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .back-btn {
+            color: var(--deep-orange); font-size: 15px; font-weight: 700; cursor: pointer;
+            border: none; background: none; text-decoration: none;
+        }
+        .phone-title { font-size: 16px; font-weight: 700; color: #2d2d2d; }
+
+        .phone-body {
+            flex: 1; padding: 16px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+
+        .page { display: none; flex-direction: column; gap: 14px; animation: fadeIn 0.45s ease-out; }
+        .page.active { display: flex; }
+
+        /* ===== 首页 ===== */
+        .home-hero {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            border-radius: 18px; padding: 26px 20px; color: #fff; text-align: center;
+        }
+        .home-hero .map-icon { font-size: 50px; animation: bounce 2s ease-in-out infinite; }
+        .home-hero h2 { font-size: 20px; font-weight: 900; margin: 8px 0 4px; }
+        .home-hero .sub { font-size: 13px; color: rgba(255,255,255,0.75); line-height: 1.6; }
+        .home-hero .venue-tag {
+            display: inline-block; margin-top: 10px;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px; padding: 4px 14px; font-size: 12px; color: #fff;
+        }
+        .home-hero .venue-tag.online {
+            background: linear-gradient(135deg, var(--online-purple), var(--online-pink));
+            border: none; margin-left: 6px;
+        }
+
+        .stat-bar {
+            display: flex; gap: 8px; background: #fff; border-radius: 14px; padding: 12px;
+            border: 1.5px solid #eee;
+        }
+        .stat-item { flex: 1; text-align: center; padding: 6px 4px; border-radius: 10px; }
+        .stat-item.offline { background: linear-gradient(135deg, rgba(14,165,233,0.08), rgba(6,182,212,0.05)); }
+        .stat-item.online { background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(236,72,153,0.05)); }
+        .stat-num { font-size: 22px; font-weight: 900; color: var(--deep-orange); }
+        .stat-item.online .stat-num { color: var(--online-purple); }
+        .stat-label { font-size: 11px; color: #888; margin-top: 2px; }
+        .stat-item .stat-num small { font-size: 13px; color: #999; font-weight: 700; }
+
+        .map-preview {
+            background: #fff; border-radius: 14px; padding: 14px; border: 1.5px solid #eee;
+        }
+        .map-preview .venue-row { text-align: center; margin-bottom: 10px; }
+        .venue-tag-big {
+            background: linear-gradient(135deg, var(--xiamen-blue), var(--xiamen-cyan));
+            color: #fff; border-radius: 12px; padding: 8px 16px; font-size: 13px; font-weight: 700;
+            display: inline-block; box-shadow: 0 4px 12px rgba(14,165,233,0.3);
+        }
+        .venue-name { text-align: center; font-size: 12px; color: #666; margin-top: 6px; }
+        .venue-grid-mini {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 320px; margin: 10px auto 4px;
+        }
+        .venue-dot {
+            width: 26px; height: 26px; border-radius: 50%; background: #eee; margin: 0 auto;
+            transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
+            font-size: 11px; color: #fff;
+        }
+        .venue-dot.offline-active { background: linear-gradient(135deg, var(--gold), var(--orange)); box-shadow: 0 0 8px rgba(255,140,0,0.4); }
+        .venue-dot.online-active { background: linear-gradient(135deg, var(--online-purple), var(--online-pink)); box-shadow: 0 0 8px rgba(139,92,246,0.4); }
+        .map-legend { font-size: 11px; color: #999; text-align: center; margin-top: 4px; }
+
+        .rules-card {
+            background: #fff; border-radius: 14px; padding: 14px; border: 1.5px solid #eee;
+        }
+        .rules-card h4 { font-size: 14px; font-weight: 700; color: var(--deep-orange); margin-bottom: 8px; }
+        .rule-item {
+            display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 12.5px; color: #555; line-height: 1.55;
+        }
+        .rule-dot {
+            width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--orange));
+            color: #fff; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; margin-top: 1px;
+        }
+        .rule-dot.online { background: linear-gradient(135deg, var(--online-purple), var(--online-pink)); }
+
+        .start-btn {
+            width: 100%; padding: 16px; border-radius: 16px; border: none;
+            background: linear-gradient(135deg, var(--red-orange), var(--deep-orange));
+            color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 6px 24px rgba(255,107,53,0.4);
+            transition: all 0.3s ease; letter-spacing: 2px;
+            animation: pulseBtn 2s ease-in-out infinite;
+        }
+        .start-btn:hover { transform: scale(1.03); }
+
+        /* ===== 功能页 ===== */
+        .map-card {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            border-radius: 18px; padding: 16px; color: #fff;
+            position: relative; overflow: hidden;
+        }
+        .map-card::before {
+            content: ''; position: absolute; inset: 0; opacity: 0.08;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .map-header { position: relative; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
+        .map-title { font-size: 16px; font-weight: 900; }
+        .map-sub { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+        .map-counter {
+            background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 12px; padding: 4px 12px; font-size: 13px; font-weight: 900; color: var(--gold);
+        }
+        .map-counter strong { font-size: 18px; }
+
+        .map-area {
+            position: relative; height: 220px; margin: 4px 0 8px;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(14,165,233,0.12), transparent 60%),
+                rgba(0,0,0,0.2);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        .map-svg-paths { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .path-line { stroke: rgba(255,215,0,0.35); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+        .path-line.active { stroke: rgba(255,215,0,0.7); stroke-dasharray: 0; }
+
+        .venue-outline {
+            position: absolute; top: 10%; left: 10%; right: 10%; bottom: 10%;
+            border: 1.5px dashed rgba(14,165,233,0.4);
+            border-radius: 14px;
+        }
+        .venue-outline::before {
+            content: '厦门奇妙日 · 主会场';
+            position: absolute; top: 4px; left: 10px;
+            font-size: 9px; color: rgba(14,165,233,0.7); font-weight: 700;
+            background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 6px;
+        }
+
+        .pin-cluster {
+            position: absolute; display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .pin-label {
+            font-size: 10px; font-weight: 900; color: #fff;
+            background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 8px;
+            backdrop-filter: blur(4px); white-space: nowrap;
+        }
+        .pin-label.all-done {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            box-shadow: 0 0 12px rgba(255,215,0,0.5);
+        }
+        .map-pin {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; color: rgba(255,255,255,0.5);
+            transition: all 0.4s ease; cursor: pointer;
+        }
+        .map-pin:hover { transform: scale(1.1); border-color: rgba(255,215,0,0.6); }
+        .map-pin.checked {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            border-color: var(--gold); color: #2d2d2d;
+            box-shadow: 0 0 16px rgba(255,215,0,0.65);
+            animation: pinCheck 0.6s ease;
+        }
+        @keyframes pinCheck {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); box-shadow: 0 0 28px rgba(255,215,0,0.9); }
+            100% { transform: scale(1); }
+        }
+
+        .reward-hint {
+            background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 12px; padding: 10px 12px; margin-top: 4px;
+            font-size: 12px; color: var(--gold); display: flex; align-items: center; gap: 8px;
+            position: relative;
+        }
+        .reward-hint.completed {
+            background: rgba(0,200,83,0.15); border-color: rgba(0,200,83,0.3); color: #00c853;
+        }
+
+        /* ===== 线上任务区 ===== */
+        .online-section {
+            background: linear-gradient(135deg, rgba(139,92,246,0.05), rgba(236,72,153,0.05));
+            border: 1.5px solid rgba(139,92,246,0.2);
+            border-radius: 14px; padding: 12px;
+        }
+        .online-section .section-title { color: var(--online-purple); display: flex; align-items: center; gap: 6px; }
+        .online-section .section-title small { font-size: 11px; color: #999; font-weight: 500; }
+
+        .section-title { font-size: 14px; font-weight: 700; color: #2d2d2d; }
+        .store-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .store-item {
+            background: #fff; border-radius: 14px; border: 2px solid #eee;
+            padding: 12px 10px; text-align: center; cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden;
+        }
+        .store-item:hover { border-color: var(--deep-orange); transform: translateY(-3px); box-shadow: 0 6px 18px rgba(230,126,0,0.15); }
+        .store-item.checked {
+            border-color: var(--deep-orange);
+            background: linear-gradient(135deg, rgba(255,140,0,0.08), rgba(255,215,0,0.06));
+        }
+        .store-item.online-item:hover { border-color: var(--online-purple); box-shadow: 0 6px 18px rgba(139,92,246,0.15); }
+        .store-item.online-item.checked {
+            border-color: var(--online-purple);
+            background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(236,72,153,0.06));
+        }
+        .store-item .check-mark {
+            position: absolute; top: 8px; right: 8px;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: #00c853; color: #fff; font-size: 12px;
+            display: none; align-items: center; justify-content: center;
+        }
+        .store-item.online-item .check-mark { background: var(--online-purple); }
+        .store-item.checked .check-mark { display: flex; }
+        .store-icon { font-size: 30px; margin-bottom: 4px; }
+        .store-city { font-size: 10px; color: var(--xiamen-blue); font-weight: 700; }
+        .store-sname { font-size: 13px; font-weight: 700; color: #2d2d2d; margin: 4px 0 2px; }
+        .store-require {
+            font-size: 10px; color: #999; margin-top: 4px; padding: 2px 6px;
+            background: #f5f5f5; border-radius: 6px; display: inline-block;
+        }
+        .store-require.online-req { color: var(--online-purple); background: rgba(139,92,246,0.08); }
+        .store-require .game-icon { display: inline-block; vertical-align: middle; margin-right: 2px; }
+        .store-visited { font-size: 11px; color: var(--deep-orange); font-weight: 600; display: none; }
+        .store-item.online-item.checked .store-visited { color: var(--online-purple); }
+        .store-item.checked .store-visited { display: block; }
+        .store-item.checked .store-sname { color: var(--deep-orange); }
+        .store-item.online-item.checked .store-sname { color: var(--online-purple); }
+
+        .reset-btn {
+            width: 100%; padding: 12px; border-radius: 14px;
+            border: 1.5px dashed #ccc; background: #fff;
+            color: #999; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+        }
+        .reset-btn:hover { border-color: var(--deep-orange); color: var(--deep-orange); }
+
+        .completion-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 20;
+            align-items: center; justify-content: center;
+        }
+        .completion-modal.show { display: flex; }
+        .completion-content {
+            background: #fff; border-radius: 22px; padding: 32px 24px; text-align: center;
+            width: 300px; animation: popIn 0.5s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 24px 72px rgba(0,0,0,0.35);
+        }
+        .completion-content .emoji { font-size: 60px; margin-bottom: 10px; }
+        .completion-content h2 { font-size: 22px; font-weight: 900; color: var(--deep-orange); margin-bottom: 8px; }
+        .completion-content p { font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.7; }
+        .completion-btn {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            color: #fff; border: none; border-radius: 24px; padding: 12px 36px;
+            font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+        }
+        .completion-btn:hover { transform: scale(1.04); box-shadow: 0 6px 20px rgba(230,126,0,0.4); }
+
+        .info-bar {
+            background: #fff; border: 1.5px solid rgba(230,126,0,0.2);
+            border-radius: 14px; padding: 12px;
+        }
+        .info-bar h4 { font-size: 13px; font-weight: 700; color: var(--deep-orange); margin-bottom: 6px; }
+        .info-bar p { font-size: 12px; color: #666; line-height: 1.7; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+        @keyframes pulseBtn { 0%,100%{box-shadow:0 6px 24px rgba(255,107,53,0.4)} 50%{box-shadow:0 12px 36px rgba(255,107,53,0.65)} }
+
+        @media (max-width: 420px) {
+            .phone { width: 100%; border-radius: 0; border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="phone-header">
+            <a href="index.html" class="back-btn">← 返回总览</a>
+            <span class="phone-title" id="headerTitle">厦门奇妙日</span>
+        </div>
+        <div class="phone-body">
+            <!-- ===== 首页 ===== -->
+            <div class="page active" id="homePage">
+                <div class="home-hero">
+                    <div class="map-icon">🎪</div>
+                    <h2>厦门奇妙日 · 探索收集</h2>
+                    <div class="sub">集齐 6 个点位碰卡<br/>（4个线下会场 + 2个线上游戏）<br/>赢取奇妙日限定大奖！</div>
+                    <div>
+                        <span class="venue-tag">📍 厦门 · 单会场</span>
+                        <span class="venue-tag online">🎮 线上游戏登录</span>
+                    </div>
+                </div>
+
+                <div class="stat-bar">
+                    <div class="stat-item offline">
+                        <div class="stat-num">0<small>/4</small></div>
+                        <div class="stat-label">📍 线下碰卡</div>
+                    </div>
+                    <div class="stat-item online">
+                        <div class="stat-num">0<small>/2</small></div>
+                        <div class="stat-label">🎮 线上登录</div>
+                    </div>
+                </div>
+
+                <div class="map-preview">
+                    <div class="venue-row">
+                        <span class="venue-tag-big">🎪 厦门奇妙日主会场</span>
+                        <div class="venue-name">4个核心点位 + 2个线上游戏任务</div>
+                    </div>
+                    <div class="venue-grid-mini" id="miniGrid">
+                        <div class="venue-dot" title="主舞台">🎤</div>
+                        <div class="venue-dot" title="互动区">🎮</div>
+                        <div class="venue-dot" title="拍照区">📸</div>
+                        <div class="venue-dot" title="福利站">🎁</div>
+                        <div class="venue-dot" title="王者荣耀" style="background:#f0f0f0;">🎮</div>
+                        <div class="venue-dot" title="王者世界" style="background:#f0f0f0;">🌍</div>
+                    </div>
+                    <div class="map-legend">🟠 线下已打卡 / 🟣 线上已登录 / ⚪ 待解锁</div>
+                </div>
+
+                <div class="rules-card">
+                    <h4>📋 活动规则</h4>
+                    <div class="rule-item"><div class="rule-dot">1</div><span>前往 <strong>厦门奇妙日主会场</strong>，NFC碰卡 <strong>4个核心点位</strong></span></div>
+                    <div class="rule-item"><div class="rule-dot">2</div><span>每个线下点位 <strong>需登录指定游戏</strong> 才能完成碰卡（王者荣耀 / 王者世界）</span></div>
+                    <div class="rule-item online"><div class="rule-dot">3</div><span>额外完成 <strong>2个线上游戏登录</strong> 任务（王者荣耀 + 王者世界）</span></div>
+                    <div class="rule-item"><div class="rule-dot">4</div><span><strong>集齐全部 6 个</strong> 即可领取奇妙日限定大奖 🎁</span></div>
+                </div>
+
+                <button class="start-btn" onclick="startExplore()">🎪 开始探索</button>
+
+                <div class="info-bar">
+                    <h4>💡 玩法说明</h4>
+                    <p>厦门奇妙日现场设4个NFC碰卡点位 + 2个线上游戏任务。线下碰卡需在已登录指定游戏的状态下完成，线上登录游戏即可直接获得点位，6个集齐可解锁限定大奖。</p>
+                </div>
+            </div>
+
+            <!-- ===== 功能页 ===== -->
+            <div class="page" id="funcPage">
+                <div class="map-card">
+                    <div class="map-header">
+                        <div>
+                            <div class="map-title">🗺️ 探索收集挑战</div>
+                            <div class="map-sub">点亮 4 线下 + 2 线上 = 6 个点位</div>
+                        </div>
+                        <div class="map-counter"><strong id="collectNum">0</strong> / 6</div>
+                    </div>
+
+                    <div class="map-area">
+                        <div class="venue-outline"></div>
+                        <svg class="map-svg-paths" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path id="path1" class="path-line" d="M 22,28 L 78,28" />
+                            <path id="path2" class="path-line" d="M 78,28 L 78,72" />
+                            <path id="path3" class="path-line" d="M 78,72 L 22,72" />
+                            <path id="path4" class="path-line" d="M 22,72 L 22,28" />
+                            <path id="path5" class="path-line" d="M 22,28 L 78,72" />
+                            <path id="path6" class="path-line" d="M 78,28 L 22,72" />
+                        </svg>
+
+                        <div class="pin-cluster" style="top: 15%; left: 12%;" id="pinCluster0">
+                            <div class="pin-label" id="cityLabel0">主舞台</div>
+                            <div class="map-pin" data-idx="0" onclick="toggleStore(0)">🎤</div>
+                        </div>
+
+                        <div class="pin-cluster" style="top: 15%; left: 72%;" id="pinCluster1">
+                            <div class="pin-label" id="cityLabel1">互动区</div>
+                            <div class="map-pin" data-idx="1" onclick="toggleStore(1)">🎮</div>
+                        </div>
+
+                        <div class="pin-cluster" style="top: 65%; left: 72%;" id="pinCluster2">
+                            <div class="pin-label" id="cityLabel2">拍照区</div>
+                            <div class="map-pin" data-idx="2" onclick="toggleStore(2)">📸</div>
+                        </div>
+
+                        <div class="pin-cluster" style="top: 65%; left: 12%;" id="pinCluster3">
+                            <div class="pin-label" id="cityLabel3">福利站</div>
+                            <div class="map-pin" data-idx="3" onclick="toggleStore(3)">🎁</div>
+                        </div>
+                    </div>
+
+                    <div class="reward-hint" id="rewardHint">
+                        📍 还差 <strong id="remainCount">6</strong> 个点位即可领取限定大奖
+                    </div>
+                </div>
+
+                <div class="section-title">🏬 线下碰卡点位 <small style="font-size:11px;color:#999;font-weight:500;">（需登录游戏）</small></div>
+                <div class="store-grid" id="offlineGrid"></div>
+
+                <div class="online-section">
+                    <div class="section-title">🎮 线上游戏任务 <small>（登录游戏即可获得）</small></div>
+                    <div class="store-grid" id="onlineGrid" style="margin-top:8px;"></div>
+                </div>
+
+                <button class="reset-btn" onclick="resetAll()">🔄 重置全部打卡</button>
+
+                <div class="info-bar">
+                    <h4>💡 玩法说明</h4>
+                    <p>厦门奇妙日主会场设4个NFC碰卡点位，碰卡前需在王者人生App内已登录对应游戏（王者荣耀 / 王者世界）。线上登录游戏任务可在到达现场前完成，加速现场打卡效率。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="completion-modal" id="completionModal">
+        <div class="completion-content">
+            <div class="emoji">🏆</div>
+            <h2>全部集齐！</h2>
+            <p>恭喜！你已打卡全部 <strong>6</strong> 个点位<br/>（4线下 + 2线上）<br/>限定大奖已发放至你的账户 🎁</p>
+            <button class="completion-btn">太棒了！</button>
+        </div>
+    </div>
+
+    <script>
+    // 6 个点位：4 个线下（含游戏登录门槛）+ 2 个线上（直接登录游戏）
+    const stores = [
+        { name: '主舞台',  type: 'offline', city: '厦门', area: 'A区', icon: '🎤', desc: '观演互动', requireGame: '王者荣耀', gameIcon: '⚔️' },
+        { name: '互动区',  type: 'offline', city: '厦门', area: 'B区', icon: '🎮', desc: '游戏体验', requireGame: '王者世界', gameIcon: '🌍' },
+        { name: '拍照区',  type: 'offline', city: '厦门', area: 'C区', icon: '📸', desc: 'AR合影',   requireGame: '王者荣耀', gameIcon: '⚔️' },
+        { name: '福利站',  type: 'offline', city: '厦门', area: 'D区', icon: '🎁', desc: '周边兑奖', requireGame: '王者世界', gameIcon: '🌍' },
+        { name: '登录王者荣耀', type: 'online', city: '线上', area: '游戏任务', icon: '⚔️', desc: '登录游戏' },
+        { name: '登录王者世界', type: 'online', city: '线上', area: '游戏任务', icon: '🌍', desc: '登录游戏' },
+    ];
+
+    let checked;
+
+    function resetChecked() { checked = new Array(stores.length).fill(false); }
+
+    function startExplore() {
+        resetChecked();
+        showFirstReward();
+    }
+
+    function showFirstReward() {
+        const modal = document.getElementById('completionModal');
+        modal.querySelector('.emoji').textContent = '🎁';
+        modal.querySelector('h2').textContent = '首次到点奖励！';
+        modal.querySelector('p').innerHTML = '恭喜获得首次碰卡奖励：<br/><strong style="font-size:18px;color:#e67e00;">💎 钻石×50</strong><br/><span style="font-size:12px;color:#999;">奖励已发放至你的账户</span>';
+        modal.classList.add('show');
+        modal._onNext = () => {
+            document.getElementById('headerTitle').textContent = '🎪 厦门奇妙日';
+            document.getElementById('homePage').classList.remove('active');
+            document.getElementById('funcPage').classList.add('active');
+            render();
+        };
+    }
+
+    document.querySelector('.completion-btn').addEventListener('click', function() {
+        const modal = document.getElementById('completionModal');
+        if (modal._onNext) {
+            modal.classList.remove('show');
+            modal._onNext();
+            modal._onNext = null;
+            modal.querySelector('.emoji').textContent = '🏆';
+            modal.querySelector('h2').textContent = '全部集齐！';
+            modal.querySelector('p').innerHTML = '恭喜！你已打卡全部 <strong>6</strong> 个点位<br/>（4线下 + 2线上）<br/>限定大奖已发放至你的账户 🎁';
+        } else {
+            modal.classList.remove('show');
+        }
+    });
+
+    function render() {
+        const count = checked.filter(Boolean).length;
+
+        // 更新地图 pin（仅前 4 个线下点位显示在地图上）
+        document.querySelectorAll('.map-pin').forEach(pin => {
+            const idx = parseInt(pin.dataset.idx);
+            pin.classList.toggle('checked', checked[idx]);
+        });
+
+        // 更新所有点位 label 高亮
+        stores.forEach((s, i) => {
+            const label = document.getElementById('cityLabel' + i);
+            if (label) label.classList.toggle('all-done', checked[i]);
+        });
+
+        // 更新所有连接线
+        const allPaths = [[0,1],[1,2],[2,3],[3,0],[0,2],[1,3]];
+        allPaths.forEach((pair, idx) => {
+            const path = document.getElementById('path' + (idx+1));
+            if (path) path.classList.toggle('active', checked[pair[0]] && checked[pair[1]]);
+        });
+
+        // 首页 mini 网格（6 个圆点）
+        const miniDots = document.querySelectorAll('.venue-grid-mini .venue-dot');
+        miniDots.forEach((dot, i) => {
+            dot.classList.remove('offline-active', 'online-active');
+            if (checked[i]) {
+                if (stores[i].type === 'offline') dot.classList.add('offline-active');
+                else dot.classList.add('online-active');
+            }
+        });
+
+        // 计数 & 提示
+        document.getElementById('collectNum').textContent = count;
+        document.getElementById('remainCount').textContent = stores.length - count;
+        const hint = document.getElementById('rewardHint');
+        if (count === stores.length) {
+            hint.classList.add('completed');
+            hint.innerHTML = '🎉 <strong>全部集齐！</strong> 限定大奖已发放';
+        } else {
+            hint.classList.remove('completed');
+            hint.innerHTML = '📍 还差 <strong>' + (stores.length - count) + '</strong> 个点位即可领取限定大奖';
+        }
+
+        // 线下网格
+        const offlineGrid = document.getElementById('offlineGrid');
+        offlineGrid.innerHTML = '';
+        stores.filter(s => s.type === 'offline').forEach(s => {
+            const i = stores.indexOf(s);
+            const item = document.createElement('div');
+            item.className = 'store-item';
+            if (checked[i]) item.classList.add('checked');
+            item.innerHTML = `
+                <div class="check-mark">✓</div>
+                <div class="store-icon">${s.icon}</div>
+                <div class="store-city">📍 ${s.city} · ${s.area}</div>
+                <div class="store-sname">${s.name}</div>
+                <div class="store-require"><span class="game-icon">${s.gameIcon}</span>需登录 ${s.requireGame}</div>
+                <div class="store-visited">✅ 已打卡</div>
+            `;
+            item.addEventListener('click', () => toggleStore(i));
+            offlineGrid.appendChild(item);
+        });
+
+        // 线上网格
+        const onlineGrid = document.getElementById('onlineGrid');
+        onlineGrid.innerHTML = '';
+        stores.filter(s => s.type === 'online').forEach(s => {
+            const i = stores.indexOf(s);
+            const item = document.createElement('div');
+            item.className = 'store-item online-item';
+            if (checked[i]) item.classList.add('checked');
+            item.innerHTML = `
+                <div class="check-mark">✓</div>
+                <div class="store-icon">${s.icon}</div>
+                <div class="store-city">🌐 ${s.city} · ${s.area}</div>
+                <div class="store-sname">${s.name}</div>
+                <div class="store-require online-req">一键登录游戏</div>
+                <div class="store-visited">✅ 已完成</div>
+            `;
+            item.addEventListener('click', () => toggleStore(i));
+            onlineGrid.appendChild(item);
+        });
+    }
+
+    function toggleStore(i) {
+        if (checked[i]) { checked[i] = false; render(); return; }
+        checked[i] = true; render();
+        if (checked.every(Boolean)) {
+            setTimeout(() => { document.getElementById('completionModal').classList.add('show'); }, 400);
+        }
+    }
+
+    function resetAll() { resetChecked(); render(); }
+
+    resetChecked();
+    </script>
+</body>
+</html>

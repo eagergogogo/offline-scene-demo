@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线下营销活动 · 留存与分享 | 总览</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #ffd700;
+            --orange: #ff8c00;
+            --deep-orange: #e67e00;
+            --red-orange: #ff6b35;
+            --deep-purple: #1a0533;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: #ffffff;
+            color: #2d2d2d;
+            min-height: 100vh;
+            padding: 40px 24px 60px;
+        }
+
+        .container { max-width: 1120px; margin: 0 auto; }
+
+        /* 顶部标题 */
+        .header { text-align: center; margin-bottom: 28px; animation: fadeInDown 0.8s ease-out; }
+        .brand-tags { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
+        .brand-tag {
+            background: rgba(255,140,0,0.1);
+            border: 1px solid rgba(255,140,0,0.3);
+            border-radius: 20px; padding: 5px 16px;
+            color: var(--deep-orange); font-size: 15px; font-weight: 500;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .header h1 { font-size: 40px; font-weight: 900; color: var(--deep-orange); margin-bottom: 6px; }
+        .header .subtitle { color: #666; font-size: 16px; letter-spacing: 1px; }
+
+        /* 漏斗链路 */
+        .funnel {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0; margin: 0 auto 36px; flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+        .funnel-step {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 14px 22px; border-radius: 16px; background: #fff;
+            border: 2px solid #eee; min-width: 120px;
+        }
+        .funnel-step .f-num {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: #ddd; color: #fff; display: flex; align-items: center;
+            justify-content: center; font-weight: 900; font-size: 16px;
+        }
+        .funnel-step .f-title { font-size: 14px; font-weight: 700; color: #666; }
+        .funnel-step .f-sub { font-size: 11px; color: #999; }
+        .funnel-step.active {
+            border-color: var(--deep-orange);
+            background: linear-gradient(135deg, rgba(255,140,0,0.08), rgba(255,165,0,0.04));
+            box-shadow: 0 6px 24px rgba(255,140,0,0.18);
+            transform: scale(1.04);
+        }
+        .funnel-step.active .f-num {
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            color: var(--deep-purple);
+            box-shadow: 0 3px 12px rgba(255,215,0,0.5);
+        }
+        .funnel-step.active .f-title { color: var(--deep-orange); }
+        .funnel-arrow { color: #ccc; font-size: 24px; padding: 0 4px; }
+
+        /* 模式卡片 */
+        .section-label {
+            text-align: center; font-size: 19px; font-weight: 700; color: #2d2d2d;
+            margin-bottom: 20px; animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+        .section-label span { color: var(--deep-orange); }
+
+        .cards {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+        .mode-card {
+            position: relative; display: block; text-decoration: none;
+            background: #fff; border-radius: 22px; border: 2px solid var(--deep-orange);
+            padding: 28px 24px 24px; overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 8px 32px rgba(230,126,0,0.08);
+            transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
+        .mode-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--red-orange), var(--gold));
+        }
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 44px rgba(0,0,0,0.14), 0 16px 56px rgba(230,126,0,0.22);
+        }
+        .mode-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .mode-badge {
+            width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 900; color: var(--deep-purple);
+            box-shadow: 0 4px 16px rgba(255,215,0,0.45);
+            position: relative;
+        }
+        .mode-badge::after {
+            content: ''; position: absolute; inset: -3px; border-radius: 17px;
+            border: 2px solid rgba(255,215,0,0.35); animation: pulseBorder 2s ease-in-out infinite;
+        }
+        .mode-name { font-size: 20px; font-weight: 700; color: #2d2d2d; line-height: 1.3; }
+        .mode-tag {
+            display: inline-block; margin-bottom: 14px; font-size: 13px; font-weight: 600;
+            color: var(--deep-orange); background: rgba(255,140,0,0.08);
+            border: 1px solid rgba(255,140,0,0.22); border-radius: 12px; padding: 4px 14px;
+        }
+        .mode-desc { font-size: 14px; color: #555; line-height: 1.75; margin-bottom: 16px; }
+        .mode-go {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 14px; font-weight: 700; color: var(--deep-orange);
+            background: rgba(255,140,0,0.08); padding: 8px 18px; border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        .mode-card:hover .mode-go { background: rgba(255,140,0,0.16); }
+        .mode-go .arrow { transition: transform 0.3s ease; }
+        .mode-card:hover .mode-go .arrow { transform: translateX(5px); }
+        .interactive-badge {
+            position: absolute; top: 16px; right: 16px;
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .foot-note {
+            text-align: center; margin-top: 40px; color: #999; font-size: 13px;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+        .foot-note strong { color: var(--deep-orange); }
+
+        @keyframes fadeInDown { from { opacity:0; transform:translateY(-30px);} to {opacity:1; transform:translateY(0);} }
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(30px);} to {opacity:1; transform:translateY(0);} }
+        @keyframes pulseBorder { 0%,100%{opacity:0.3;transform:scale(1);} 50%{opacity:0.7;transform:scale(1.06);} }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 28px; }
+            .cards { grid-template-columns: 1fr; }
+            .funnel { gap: 4px 0; }
+            .funnel-arrow { transform: rotate(90deg); padding: 2px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand-tags">
+                <span class="brand-tag"><span>👑</span> 王者荣耀</span>
+                <span class="brand-tag"><span>🏆</span> 王者人生</span>
+            </div>
+            <h1>留存与分享 · 互动 Demo 总览</h1>
+            <div class="subtitle">✨ 线下营销漏斗第四步 · 6 种可交互玩法 Demo ✨</div>
+        </div>
+
+        <div class="funnel">
+            <div class="funnel-step"><div class="f-num">1</div><div class="f-title">首次触达</div><div class="f-sub">线上/线下</div></div>
+            <div class="funnel-arrow">➤</div>
+            <div class="funnel-step"><div class="f-num">2</div><div class="f-title">活动参与</div><div class="f-sub">碰卡</div></div>
+            <div class="funnel-arrow">➤</div>
+            <div class="funnel-step"><div class="f-num">3</div><div class="f-title">游戏转化</div><div class="f-sub">权益领取</div></div>
+            <div class="funnel-arrow">➤</div>
+            <div class="funnel-step active"><div class="f-num">4</div><div class="f-title">留存与分享</div><div class="f-sub">可交互 Demo</div></div>
+        </div>
+
+        <div class="section-label">六种 <span>留存与分享</span> 互动 Demo · 点击卡片即可体验</div>
+        <div class="cards">
+            <a class="mode-card" href="demo-2-nearby.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">2</div>
+                    <div class="mode-name">推荐附近点位</div>
+                </div>
+                <span class="mode-tag">LBS 定位 · 就近转化</span>
+                <p class="mode-desc">碰卡成功后，基于 LBS 推荐附近门店，按距离排序，一键导航前往。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-3-continuous.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">3</div>
+                    <div class="mode-name">连续碰卡活动</div>
+                </div>
+                <span class="mode-tag">强留存 · 日活拉动</span>
+                <p class="mode-desc">7天连续碰卡达标领大奖，用连续打卡机制强力拉动日活。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-6-multi-store.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">6</div>
+                    <div class="mode-name">多点位打卡有礼</div>
+                </div>
+                <span class="mode-tag">强探索 · 覆盖面广</span>
+                <p class="mode-desc">集齐不同门店碰卡得奖励，驱动用户跨店探索扩大覆盖。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-7-cross-game.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">7</div>
+                    <div class="mode-name">其他游戏碰卡推荐</div>
+                </div>
+                <span class="mode-tag">生态联动 · 流量复用</span>
+                <p class="mode-desc">交叉推荐其他游戏的NFC活动，复用流量强化矩阵联动。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-8-merchant.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">8</div>
+                    <div class="mode-name">商户激励长期活动</div>
+                </div>
+                <span class="mode-tag">混合激励 · 商户联动</span>
+                <p class="mode-desc">到店 NFC 碰卡享权益：连续碰卡签到 / 添加门店社群 / 参与游戏活动领权利 / 本周打卡排行，多重激励长期留存。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-9-meituan-cafe.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">9</div>
+                    <div class="mode-name">美团网费 · 网吧碰卡</div>
+                </div>
+                <span class="mode-tag">美团合作 · 网吧场景</span>
+                <p class="mode-desc">到网吧碰卡享 4 项权益：连续打卡奖励、美团网费低价购买、<strong>核销解锁游戏权益</strong>、加入门店社群。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-10-alipay.html">
+                <span class="interactive-badge">🎮 可交互</span>
+                <div class="mode-head">
+                    <div class="mode-badge">10</div>
+                    <div class="mode-name">支付宝合作 · 网吧碰卡</div>
+                </div>
+                <span class="mode-tag">支付宝合作 · 网吧场景</span>
+                <p class="mode-desc">到网吧碰卡享 4 项权益：连续打卡奖励、快速上机、<strong>领取奶茶券</strong>（喜茶/蜜雪冰城等）、加入门店社群。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-11-mixed-all.html" style="border-color:#ff8c00; background:linear-gradient(135deg,#fff7ed,#fffbf5);">
+                <span class="interactive-badge" style="background:rgba(255,140,0,0.15); color:#ff8c00;">🔥 最全整合</span>
+                <div class="mode-head">
+                    <div class="mode-badge" style="background:linear-gradient(135deg,#ff8c00,#ff6b35);">11</div>
+                    <div class="mode-name">网吧碰卡 · 整合版</div>
+                </div>
+                <span class="mode-tag" style="background:rgba(255,140,0,0.12); color:#e67e00;">5 大模块 · 头部排行榜</span>
+                <p class="mode-desc">最全功能聚合：<strong>头部打卡排行 Banner</strong> + 连续打卡 + 快速上机 + 网费优惠（<strong>美团/支付宝 Tab 切换</strong>）+ 加入门店社群。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+
+            <a class="mode-card" href="demo-12-kpl-qimiao.html" style="border-color:#6b1fb8; background:linear-gradient(135deg,#f8f4ff,#fffbf5);">
+                <span class="interactive-badge" style="background:rgba(107,31,184,0.1); color:#6b1fb8;">🔥 KPL赛事</span>
+                <div class="mode-head">
+                    <div class="mode-badge" style="background:linear-gradient(135deg,#6b1fb8,#4a148c);">12</div>
+                    <div class="mode-name">KPL奇妙日 · 多点位打卡</div>
+                </div>
+                <span class="mode-tag" style="background:rgba(107,31,184,0.12); color:#5e2ba5;">预热任务 · 地图探索 · 进度轴</span>
+                <p class="mode-desc">KPL奇妙日赛事配套玩法：<strong>完成预热任务抽奖</strong> → 地图解锁 3 个点位得 1 次线下抽奖机会 → 解锁全部 6 个点位再得 1 次抽奖机会。</p>
+                <span class="mode-go">立即体验 <span class="arrow">➤</span></span>
+            </a>
+        </div>
+
+        <div class="foot-note">
+            以上 Demo 均为 <strong>可交互原型</strong>，模拟真实操作流程，用于功能体验与方案评审。
+        </div>
+    </div>
+</body>
+</html>

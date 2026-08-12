@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付宝合作 · 网吧碰卡 Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --deep-purple: #1a0533;
+            --gold: #ffd700;
+            --orange: #0a5cd6;
+            --deep-orange: #e67e00;
+            --alipay-blue: #1677FF;
+            --alipay-blue-dark: #e6bc00;
+            --cafe-cyan: #00e5ff;
+            --community-blue: #2196f3;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: #ffffff;
+            color: #2d2d2d;
+            min-height: 100vh; display: flex; justify-content: center; padding: 20px;
+        }
+        .phone {
+            width: 390px; min-height: 750px; background: #f8f8f8;
+            border-radius: 32px; overflow: hidden; border: 3px solid #ddd;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            display: flex; flex-direction: column;
+        }
+        .phone-header {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            padding: 14px 20px; display: flex; align-items: center; gap: 10px;
+            flex-shrink: 0;
+        }
+        .back-btn {
+            color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; cursor: pointer;
+            border: none; background: none; text-decoration: none; padding: 4px 8px;
+            border-radius: 8px; transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.15); }
+        .phone-title { font-size: 16px; font-weight: 700; color: #fff; flex: 1; }
+        .header-badge {
+            font-size: 10px; background: rgba(22,119,255,0.2); color: var(--alipay-blue);
+            padding: 4px 8px; border-radius: 10px; font-weight: 700;
+        }
+        .phone-body {
+            flex: 1; padding: 16px; overflow-y: auto; display: flex;
+            flex-direction: column; gap: 14px; position: relative;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.85) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(22,119,255,0.4); } 50% { box-shadow: 0 0 0 12px rgba(22,119,255,0); } }
+        @keyframes scanLine {
+            0% { top: -2px; opacity: 1; }
+            80% { top: 100%; opacity: 0.6; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ===== Tap Success Hero ===== */
+        .tap-hero {
+            background: linear-gradient(135deg, #1a0533 0%, #2a1060 40%, #1a3a20 100%);
+            border-radius: 18px; padding: 24px 20px; color: #fff; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .tap-hero::before {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 140px; height: 140px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(22,119,255,0.12) 0%, transparent 70%);
+        }
+        .tap-hero::after {
+            content: ''; position: absolute; left: 50%; top: -2px; width: 80%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cafe-cyan), transparent);
+            transform: translateX(-50%); animation: scanLine 2.5s ease-in-out infinite;
+        }
+        .tap-success-icon {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--alipay-blue), #0a5cd6);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px; font-size: 32px;
+            animation: pulseGlow 2s ease-in-out infinite;
+            position: relative; z-index: 1;
+        }
+        .tap-hero .store-name { font-size: 19px; font-weight: 900; position: relative; z-index: 1; }
+        .tap-hero .addr { font-size: 11px; color: rgba(255,255,255,0.55); margin: 4px 0 12px; position: relative; z-index: 1; }
+        .tap-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.3);
+            border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--cafe-cyan);
+            font-weight: 700; position: relative; z-index: 1;
+        }
+        .tap-status .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--cafe-cyan); animation: pulseGlow 1.5s ease-in-out infinite;
+        }
+
+        /* ===== Card通用 ===== */
+        .card {
+            background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #eee;
+            transition: all 0.2s;
+        }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .card-icon {
+            width: 40px; height: 40px; border-radius: 12px; display: flex;
+            align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+        }
+        .card-title { font-size: 15px; font-weight: 900; color: #2d2d2d; }
+        .card-sub { font-size: 11px; color: #999; margin-top: 2px; }
+
+        /* ===== 1. 连续打卡 ===== */
+        .streak-card .card-icon { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 12px; }
+        .streak-cell {
+            aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+            border: 2px solid #eee; background: #fafafa; color: #bbb; transition: all 0.3s;
+        }
+        .streak-cell.done {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            border-color: var(--deep-orange); color: #fff;
+        }
+        .streak-cell.today { border-color: var(--orange); border-style: dashed; color: var(--orange); }
+        .streak-cell.milestone { position: relative; }
+        .streak-cell.milestone::after {
+            content: '🎁'; position: absolute; top: -8px; right: -6px; font-size: 11px;
+        }
+        .streak-info-row { display: flex; justify-content: space-between; align-items: center; }
+        .streak-count { font-size: 13px; color: #666; }
+        .streak-count strong { color: var(--deep-orange); font-size: 18px; }
+        .streak-reward-preview { font-size: 11px; color: #999; }
+
+        /* ===== 2. 支付宝权益 ===== */
+        .alipay-card { border-color: rgba(22,119,255,0.3); background: linear-gradient(135deg, #f5f8ff, #e3f0ff); }
+        .alipay-card .card-icon { background: linear-gradient(135deg, #1677FF, #0a5cd6); color: #fff; font-size: 24px; }
+        .alipay-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--alipay-blue); color: #ffffff; font-size: 12px;
+            font-weight: 700; padding: 5px 12px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .fee-info { display: flex; gap: 12px; margin: 12px 0; }
+        .fee-item {
+            flex: 1; background: #fff; border-radius: 12px; padding: 12px; text-align: center;
+            border: 1px solid #bbdefb;
+        }
+        .fee-val { font-size: 24px; font-weight: 900; color: var(--alipay-blue-dark); }
+        .fee-unit { font-size: 11px; color: #999; margin-top: 2px; }
+        .alipay-btn {
+            width: 100%; padding: 12px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #1677FF, #0a5cd6);
+            color: #ffffff; font-size: 15px; font-weight: 900; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .alipay-btn:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(22,119,255,0.4); }
+        .alipay-btn .arrow { font-size: 18px; }
+
+        /* ===== 3. 添加社群 ===== */
+        .community-card .card-icon { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
+        .community-card { border-color: rgba(33,150,243,0.15); }
+        .store-group-info {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            background: #f0f7ff; border-radius: 12px; margin-bottom: 10px;
+        }
+        .group-avatar {
+            width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .group-info-text { flex: 1; }
+        .group-name { font-size: 13px; font-weight: 700; color: #2d2d2d; }
+        .group-members { font-size: 11px; color: #999; }
+        .join-btn {
+            width: 100%; padding: 11px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, var(--community-blue), #1976d2);
+            color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .join-btn:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(33,150,243,0.35); }
+
+        /* ===== 3. 上机模块 ===== */
+        .machine-card .card-icon { background: linear-gradient(135deg, #1a2a3a, #00e5ff); color: #fff; }
+        .machine-card { border-color: rgba(0,229,255,0.25); background: linear-gradient(135deg, #f0fdff, #e0f7fa); position: relative; overflow: hidden; }
+        .machine-card::before {
+            content: ''; position: absolute; top: -30px; right: -30px;
+            width: 120px; height: 120px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,229,255,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .machine-info-row { display: flex; gap: 10px; margin: 10px 0; }
+        .machine-info {
+            flex: 1; background: #fff; border-radius: 12px; padding: 10px 12px;
+            border: 1px solid #e0f7fa; position: relative; z-index: 1;
+        }
+        .machine-info .info-label { font-size: 11px; color: #999; margin-bottom: 4px; }
+        .machine-info .info-value { font-size: 18px; font-weight: 900; color: #00838f; }
+        .machine-info .info-value .unit { font-size: 11px; color: #999; font-weight: 500; margin-left: 3px; }
+        .machine-info.highlight { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border-color: #00e5ff; }
+        .machine-info.highlight .info-value { color: #006064; }
+
+        .machine-packages { display: flex; gap: 8px; margin: 12px 0; position: relative; z-index: 1; }
+        .package-chip {
+            flex: 1; padding: 10px 6px; border-radius: 10px; background: #fff;
+            border: 2px solid #e0f7fa; text-align: center; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .package-chip:hover { border-color: #00e5ff; }
+        .package-chip.active {
+            background: linear-gradient(135deg, #00e5ff, #00b8d4); color: #fff;
+            border-color: #00b8d4; box-shadow: 0 3px 12px rgba(0,229,255,0.35);
+        }
+        .package-chip .pkg-name { font-size: 13px; font-weight: 900; }
+        .package-chip .pkg-price { font-size: 11px; margin-top: 2px; opacity: 0.85; }
+        .package-chip.active .pkg-price { opacity: 0.9; }
+
+        .machine-btn {
+            width: 100%; padding: 13px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #00e5ff, #00838f); color: #fff;
+            font-size: 15px; font-weight: 900; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            position: relative; z-index: 1;
+        }
+        .machine-btn:hover { transform: scale(1.02); box-shadow: 0 4px 18px rgba(0,229,255,0.4); }
+        .machine-btn .arrow { font-size: 18px; }
+
+        /* ===== 规则 ===== */
+        .rules-card .rule-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+        .rules-card .rule-dot {
+            width: 22px; height: 22px; border-radius: 50%; background: var(--deep-purple);
+            color: #fff; font-size: 11px; font-weight: 900; display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .rules-card .rule-text { font-size: 12px; color: #555; line-height: 1.6; }
+
+        /* ===== 底部按钮 ===== */
+        .simulate-btn {
+            padding: 14px; background: linear-gradient(135deg, #1a0533, #4a2a8a);
+            color: #fff; border: none; border-radius: 16px; font-size: 15px; font-weight: 900;
+            cursor: pointer; transition: all 0.2s; width: 100%;
+        }
+        .simulate-btn:hover { transform: scale(1.02); box-shadow: 0 4px 20px rgba(26,5,51,0.35); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+            background: #2d2d2d; color: #fff; padding: 10px 24px; border-radius: 24px;
+            font-size: 13px; font-weight: 700; z-index: 200; opacity: 0;
+            pointer-events: none; transition: all 0.3s ease; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+        /* ===== Modal Overlay ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px); z-index: 500; display: flex;
+            align-items: center; justify-content: center; opacity: 0;
+            pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            width: 340px; max-width: 92vw; background: #fff; border-radius: 24px;
+            padding: 28px 24px 22px; text-align: center; position: relative;
+            transform: scale(0.85) translateY(20px);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal-overlay.show .modal-card {
+            transform: scale(1) translateY(0);
+        }
+        .modal-close {
+            position: absolute; top: 12px; right: 16px; width: 30px; height: 30px;
+            border-radius: 50%; border: none; background: #f0f0f0; color: #999;
+            font-size: 16px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s;
+        }
+        .modal-close:hover { background: #e0e0e0; color: #333; }
+
+        /* Tap Success Modal */
+        .tap-modal-icon {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #1677FF, #0a5cd6);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px; font-size: 42px;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        .tap-modal-title { font-size: 20px; font-weight: 900; color: #1a0533; margin-bottom: 4px; }
+        .tap-modal-addr { font-size: 12px; color: #999; margin-bottom: 12px; }
+        .tap-modal-stats {
+            display: flex; gap: 10px; justify-content: center; margin: 14px 0;
+        }
+        .tap-modal-stat {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-radius: 12px; padding: 10px 16px; min-width: 70px;
+        }
+        .tap-modal-stat .val { font-size: 22px; font-weight: 900; color: var(--deep-orange); }
+        .tap-modal-stat .lbl { font-size: 10px; color: #999; margin-top: 2px; }
+        .tap-modal-reward {
+            background: linear-gradient(135deg, #f0fff4, #e8f5e9);
+            border-radius: 12px; padding: 10px 14px; margin: 10px 0; font-size: 13px;
+            color: #2e7d32; font-weight: 700; display: none;
+        }
+        .tap-modal-reward.show { display: block; }
+        .modal-btn {
+            width: 100%; padding: 13px; border-radius: 14px; border: none;
+            font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 6px;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #1677FF, #0a5cd6);
+            color: #ffffff;
+        }
+        .modal-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(22,119,255,0.35); }
+        .modal-btn.secondary {
+            background: #f5f5f5; color: #666; font-size: 13px; padding: 10px;
+            margin-top: 8px; font-weight: 500;
+        }
+        .modal-btn.secondary:hover { background: #eee; box-shadow: none; }
+
+        /* Reward List Modal */
+        .reward-section { text-align: left; margin-bottom: 14px; }
+        .reward-section-title {
+            font-size: 13px; font-weight: 900; color: #666; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .reward-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+            border-radius: 12px; background: #fafafa; margin-bottom: 6px;
+        }
+        .reward-item.claimed { background: #f0fff4; border: 1px solid #c8e6c9; }
+        .reward-item.pending { background: #e3f0ff; border: 1px solid #bbdefb; }
+        .reward-item-icon {
+            width: 36px; height: 36px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+        }
+        .reward-item-icon.claimed { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+        .reward-item-icon.pending { background: linear-gradient(135deg, #e3f0ff, #6db3ff); }
+        .reward-item-info { flex: 1; }
+        .reward-item-name { font-size: 13px; font-weight: 700; color: #2d2d2d; }
+        .reward-item-meta { font-size: 11px; color: #999; }
+        .reward-item-status {
+            font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 10px;
+        }
+        .reward-item-status.claimed { background: #e8f5e9; color: #2e7d32; }
+        .reward-item-status.pending { background: #e3f0ff; color: #f57f17; }
+
+        /* 我的奖励浮动按钮 */
+        .my-rewards-fab {
+            position: absolute; top: 12px; right: 16px; z-index: 10;
+            background: linear-gradient(135deg, #1677FF, #0a5cd6); color: #ffffff;
+            border: none; border-radius: 20px; padding: 7px 14px; font-size: 12px;
+            font-weight: 900; cursor: pointer; box-shadow: 0 3px 12px rgba(22,119,255,0.3);
+            transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .my-rewards-fab:hover { transform: scale(1.05); box-shadow: 0 5px 18px rgba(22,119,255,0.4); }
+        .my-rewards-fab .dot-badge {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #ff3d00; animation: pulseGlow 1.5s ease-in-out infinite;
+        }
+
+        /* 响应式 */
+        @media (max-width: 420px) {
+            .phone { width: 100%; border-radius: 0; border: none; min-height: 100vh; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="phone" id="app">
+    <div class="phone-header">
+        <a class="back-btn" href="index.html">← 总览</a>
+        <span class="phone-title">支付宝合作 · 网吧碰卡</span>
+        <span class="header-badge">支付宝合作</span>
+    </div>
+
+    <div class="phone-body">
+        <!-- Hero: 碰卡成功 -->
+        <div class="tap-hero">
+            <div class="tap-success-icon">📳</div>
+            <div class="store-name" id="currentStoreName">网鱼网咖 · 三里屯店</div>
+            <div class="addr">朝阳区三里屯太古里B1</div>
+            <div class="tap-status">
+                <span class="dot"></span> 碰卡成功 · 权益已解锁
+            </div>
+        </div>
+
+        <!-- 我的奖励浮动按钮 -->
+        <button class="my-rewards-fab" onclick="openMyRewards()">
+            <span class="dot-badge" id="rewardBadge" style="display:none;"></span>
+            🎁 我的奖励
+        </button>
+
+        <!-- 1. 连续打卡 -->
+        <div class="card streak-card">
+            <div class="card-header">
+                <div class="card-icon">🔥</div>
+                <div>
+                    <div class="card-title">连续打卡奖励</div>
+                    <div class="card-sub">到店碰卡，连续达标赢好礼</div>
+                </div>
+            </div>
+            <div class="streak-grid" id="streakGrid"></div>
+            <div class="streak-info-row">
+                <span class="streak-count">已连续 <strong id="streakDays">2</strong> 天</span>
+                <span class="streak-reward-preview">D3/D5/D7 触发额外奖励</span>
+            </div>
+        </div>
+
+        <!-- 2. 快速上机 -->
+        <div class="card machine-card">
+            <div class="card-header">
+                <div class="card-icon">🖥️</div>
+                <div>
+                    <div class="card-title">快速上机</div>
+                    <div class="card-sub">碰卡即享，一键开启畅玩</div>
+                </div>
+            </div>
+            <div class="machine-info-row">
+                <div class="machine-info highlight">
+                    <div class="info-label">为您预留机位</div>
+                    <div class="info-value" id="machineNo">05<span class="unit">号</span></div>
+                </div>
+                <div class="machine-info">
+                    <div class="info-label">当前空闲</div>
+                    <div class="info-value" id="availableCount">32<span class="unit">台</span></div>
+                </div>
+            </div>
+            <div class="machine-packages" id="packageList">
+                <div class="package-chip" data-pkg="1h" onclick="selectPackage(this)">
+                    <div class="pkg-name">1 小时</div>
+                    <div class="pkg-price">¥6</div>
+                </div>
+                <div class="package-chip active" data-pkg="3h" onclick="selectPackage(this)">
+                    <div class="pkg-name">3 小时</div>
+                    <div class="pkg-price">¥15</div>
+                </div>
+                <div class="package-chip" data-pkg="night" onclick="selectPackage(this)">
+                    <div class="pkg-name">包夜</div>
+                    <div class="pkg-price">¥30</div>
+                </div>
+            </div>
+            <button class="machine-btn" onclick="startMachine()">
+                🚀 一键上机 <span class="arrow">→</span>
+            </button>
+        </div>
+
+        <!-- 3. 支付宝权益 -->
+        <div class="card alipay-card">
+            <div class="card-header">
+                <div class="card-icon">🥤</div>
+                <div>
+                    <div class="card-title">支付宝品牌优惠券</div>
+                    <div class="card-sub">碰卡即领品牌券，畅玩畅饮</div>
+                </div>
+            </div>
+            <span class="alipay-badge">🥤 支付宝小程序 × 品牌券</span>
+            <div class="fee-info">
+                <div class="fee-item">
+                    <div class="fee-val" style="color:#e60012;">5<span style="font-size:14px;">元</span></div>
+                    <div class="fee-unit">喜茶立减券</div>
+                </div>
+                <div class="fee-item">
+                    <div class="fee-val" style="color:#e60012;">满20<span style="font-size:13px;">减5</span></div>
+                    <div class="fee-unit">蜜雪冰城可用</div>
+                </div>
+            </div>
+            <button class="alipay-btn" onclick="openAlipay()">
+                去支付宝领奶茶券 <span class="arrow">→</span>
+            </button>
+        </div>
+
+        <!-- 4. 加入门店社群 -->
+        <div class="card community-card">
+            <div class="card-header">
+                <div class="card-icon">💬</div>
+                <div>
+                    <div class="card-title">加入门店社群</div>
+                    <div class="card-sub">预约包间、赛事报名、专属福利</div>
+                </div>
+            </div>
+            <div class="store-group-info">
+                <div class="group-avatar" id="groupAvatar">🎮</div>
+                <div class="group-info-text">
+                    <div class="group-name" id="groupName">网鱼网咖·三里屯店 玩家群</div>
+                    <div class="group-members" id="groupMembers">128人 · 店长在线</div>
+                </div>
+            </div>
+            <button class="join-btn" onclick="joinCommunity()">+ 加入门店社群</button>
+        </div>
+
+        <!-- 规则 -->
+        <div class="card rules-card">
+            <div class="card-title" style="margin-bottom:10px;">📋 活动规则</div>
+            <div class="rule-item">
+                <div class="rule-dot">1</div>
+                <div class="rule-text">到合作网吧 <strong>NFC 碰卡</strong>，即可解锁连续打卡进度 + 支付宝品牌优惠券</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-dot">2</div>
+                <div class="rule-text">连续打卡 <strong>中断则清零</strong>，D3/D5/D7 天触发额外实物奖励</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-dot">3</div>
+                <div class="rule-text">支付宝权益券 <strong>到店核销</strong>，通过支付宝小程序低价购买上网套餐</div>
+            </div>
+            <div class="rule-item">
+                <div class="rule-dot">4</div>
+                <div class="rule-text">每店仅可碰卡打卡<strong>1次/天</strong>，奖励实时发放至账户</div>
+            </div>
+        </div>
+
+        <!-- 模拟碰卡 -->
+        <button class="simulate-btn" onclick="simulateTap()">📳 模拟 NFC 碰卡（随机网吧）</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ==================== 弹窗：碰卡成功 ==================== -->
+<div class="modal-overlay" id="tapModal">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeModal('tapModal')">✕</button>
+        <div class="tap-modal-icon" id="tapModalIcon">📳</div>
+        <div class="tap-modal-title" id="tapModalTitle">碰卡成功！</div>
+        <div class="tap-modal-addr" id="tapModalAddr"></div>
+        <div class="tap-modal-stats">
+            <div class="tap-modal-stat">
+                <div class="val" id="tapModalStreak">2</div>
+                <div class="lbl">连续打卡</div>
+            </div>
+            <div class="tap-modal-stat">
+                <div class="val">+1</div>
+                <div class="lbl">今日打卡</div>
+            </div>
+        </div>
+        <div class="tap-modal-reward" id="tapModalReward">
+            <span id="tapModalRewardText"></span>
+        </div>
+        <button class="modal-btn" onclick="claimTapReward()">🎉 太好了，确认领取</button>
+        <button class="modal-btn secondary" onclick="closeModal('tapModal')">稍后再说</button>
+    </div>
+</div>
+
+<!-- ==================== 弹窗：我的奖励 ==================== -->
+<div class="modal-overlay" id="rewardsModal">
+    <div class="modal-card" style="max-height:70vh; overflow-y:auto;">
+        <button class="modal-close" onclick="closeModal('rewardsModal')">✕</button>
+        <div style="font-size:18px; font-weight:900; color:#1a0533; margin-bottom:16px;">🎁 我的奖励</div>
+        <div class="reward-section">
+            <div class="reward-section-title">🔥 连续打卡奖励</div>
+            <div id="streakRewardsList"></div>
+        </div>
+        <div class="reward-section">
+            <div class="reward-section-title">🚀 上机记录</div>
+            <div id="machineSessionsList"></div>
+        </div>
+        <div class="reward-section">
+            <div class="reward-section-title">💙 支付宝特权奖励</div>
+            <div id="alipayRewardsList"></div>
+        </div>
+        <div class="reward-section">
+            <div class="reward-section-title">💬 社群特权</div>
+            <div id="communityRewardsList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== 数据 ====================
+const INTERNET_CAFES = [
+    { id: 'c1', name: '网鱼网咖 · 三里屯店', addr: '朝阳区三里屯太古里B1', dist: '当前', icon: '🎮', avatar: '🎮', groupName: '网鱼网咖·三里屯店 玩家群', members: '128人' },
+    { id: 'c2', name: '杰拉网咖 · 望京店', addr: '朝阳区望京SOHO T2 B1', dist: '1.2km', icon: '🖥️', avatar: '🖥️', groupName: '杰拉网咖·望京店 电竞群', members: '96人' },
+    { id: 'c3', name: '树呆熊网咖 · 国贸店', addr: '朝阳区建国路88号', dist: '2.5km', icon: '🐻', avatar: '🐻', groupName: '树呆熊网咖·国贸店 玩家群', members: '73人' },
+    { id: 'c4', name: '白夜网咖 · 双井店', addr: '朝阳区广渠路66号', dist: '3.1km', icon: '🌙', avatar: '🌙', groupName: '白夜网咖·双井店 开黑群', members: '55人' },
+    { id: 'c5', name: '竞域电竞 · 五道口店', addr: '海淀区成府路28号', dist: '4.8km', icon: '⚔️', avatar: '⚔️', groupName: '竞域电竞·五道口店 战队群', members: '112人' },
+];
+
+let currentCafeIndex = 0;
+let streakDays = 2; // 当前连续打卡天数（模拟已打卡2天）
+let pendingMilestoneReward = null; // 待领取的里程碑奖励
+let selectedPackage = '3h'; // 当前选中的上机套餐
+let machineSessions = []; // 上机记录 { machineNo, pkg, pkgName, price, startedAt }
+
+// 奖励追踪
+const STREAK_MILESTONES = {
+    3: { name: '限定电竞鼠标垫 ×1', icon: '🖱️' },
+    5: { name: '游戏皮肤体验卡 ×1', icon: '🎭' },
+    7: { name: '神秘盲盒 ×1', icon: '🎁' }
+};
+
+// 上机套餐
+const MACHINE_PACKAGES = {
+    '1h':    { name: '1 小时', price: '¥6' },
+    '3h':    { name: '3 小时', price: '¥15' },
+    'night': { name: '包夜',  price: '¥30' }
+};
+
+let claimedRewards = []; // { type, milestone, name, icon, claimedAt }
+
+// ==================== 弹窗系统 ====================
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+// ==================== 渲染 ====================
+function renderAll() {
+    renderStreakGrid();
+    renderCurrentStore();
+    updateRewardBadge();
+}
+function renderCurrentStore() {
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+    document.getElementById('currentStoreName').textContent = cafe.name;
+    document.getElementById('groupName').textContent = cafe.groupName;
+    document.getElementById('groupMembers').textContent = cafe.members + ' · 店长在线';
+    document.getElementById('groupAvatar').textContent = cafe.avatar;
+}
+function renderStreakGrid() {
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+        const day = i + 1;
+        let cls = '';
+        if (i < streakDays) cls = 'done';
+        else if (i === streakDays) cls = 'today';
+        if (day === 3 || day === 5 || day === 7) cls += ' milestone';
+        html += `<div class="streak-cell ${cls}">
+            <span>D${day}</span>
+            <span style="font-size:16px;">${i < streakDays ? '✓' : day}</span>
+        </div>`;
+    }
+    document.getElementById('streakGrid').innerHTML = html;
+    document.getElementById('streakDays').textContent = streakDays;
+}
+function updateRewardBadge() {
+    const badge = document.getElementById('rewardBadge');
+    if (pendingMilestoneReward || claimedRewards.length > 0 || machineSessions.length > 0) {
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// ==================== 我的奖励弹窗 ====================
+function openMyRewards() {
+    // 连续打卡奖励列表
+    let streakHTML = '';
+    for (let d = 3; d <= 7; d += 2) {
+        const m = STREAK_MILESTONES[d];
+        const claimed = claimedRewards.find(r => r.milestone === d);
+        const isReached = streakDays >= d;
+        if (claimed) {
+            streakHTML += `<div class="reward-item claimed">
+                <div class="reward-item-icon claimed">${m.icon}</div>
+                <div class="reward-item-info">
+                    <div class="reward-item-name">D${d} 里程碑 · ${m.name}</div>
+                    <div class="reward-item-meta">领取时间：${claimed.claimedAt}</div>
+                </div>
+                <span class="reward-item-status claimed">已领取 ✓</span>
+            </div>`;
+        } else if (isReached && pendingMilestoneReward && pendingMilestoneReward.day === d) {
+            streakHTML += `<div class="reward-item pending" onclick="claimSpecificMilestone(${d}); closeModal('rewardsModal');">
+                <div class="reward-item-icon pending">${m.icon}</div>
+                <div class="reward-item-info">
+                    <div class="reward-item-name">D${d} 里程碑 · ${m.name}</div>
+                    <div class="reward-item-meta">已达成，点击立即领取</div>
+                </div>
+                <span class="reward-item-status pending">待领取</span>
+            </div>`;
+        } else {
+            streakHTML += `<div class="reward-item" style="opacity:0.5;">
+                <div class="reward-item-icon" style="background:#f5f5f5;">${m.icon}</div>
+                <div class="reward-item-info">
+                    <div class="reward-item-name">D${d} 里程碑 · ${m.name}</div>
+                    <div class="reward-item-meta">${isReached ? '已过期' : `还需打卡 ${d - streakDays} 天`}</div>
+                </div>
+            </div>`;
+        }
+    }
+    document.getElementById('streakRewardsList').innerHTML = streakHTML;
+
+    // 支付宝特权
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+    document.getElementById('alipayRewardsList').innerHTML = `
+        <div class="reward-item claimed">
+            <div class="reward-item-icon claimed" style="background:linear-gradient(135deg,#e60012,#b30000);">🥤</div>
+            <div class="reward-item-info">
+                <div class="reward-item-name">喜茶 5 元立减券</div>
+                <div class="reward-item-meta">${cafe.name} · 碰卡即得 · 满 30 可用</div>
+            </div>
+            <span class="reward-item-status claimed">已获得 ✓</span>
+        </div>
+        <div class="reward-item claimed">
+            <div class="reward-item-icon claimed" style="background:linear-gradient(135deg,#ff7043,#e64a19);">🧋</div>
+            <div class="reward-item-info">
+                <div class="reward-item-name">蜜雪冰城 满 20 减 5</div>
+                <div class="reward-item-meta">${cafe.name} · 碰卡即得 · 全国门店通用</div>
+            </div>
+            <span class="reward-item-status claimed">已获得 ✓</span>
+        </div>
+    `;
+
+    // 社群特权
+    document.getElementById('communityRewardsList').innerHTML = `
+        <div class="reward-item claimed">
+            <div class="reward-item-icon claimed">💬</div>
+            <div class="reward-item-info">
+                <div class="reward-item-name">${cafe.groupName}</div>
+                <div class="reward-item-meta">包间预约 / 赛事报名 / 专属福利</div>
+            </div>
+            <span class="reward-item-status claimed">已加入 ✓</span>
+        </div>
+    `;
+
+    // 上机记录
+    if (machineSessions.length === 0) {
+        document.getElementById('machineSessionsList').innerHTML = `
+            <div class="reward-item" style="opacity:0.5;">
+                <div class="reward-item-icon" style="background:#f5f5f5;">🖥️</div>
+                <div class="reward-item-info">
+                    <div class="reward-item-name">暂无上机记录</div>
+                    <div class="reward-item-meta">点击「一键上机」开始畅玩</div>
+                </div>
+            </div>`;
+    } else {
+        document.getElementById('machineSessionsList').innerHTML = machineSessions.slice().reverse().map(s => `
+            <div class="reward-item claimed">
+                <div class="reward-item-icon claimed">🖥️</div>
+                <div class="reward-item-info">
+                    <div class="reward-item-name">${s.machineNo}号机 · ${s.pkgName} (${s.price})</div>
+                    <div class="reward-item-meta">${s.cafeName} · ${s.startedAt}</div>
+                </div>
+                <span class="reward-item-status claimed">上机中</span>
+            </div>
+        `).join('');
+    }
+
+    openModal('rewardsModal');
+}
+
+function claimSpecificMilestone(d) {
+    if (pendingMilestoneReward && pendingMilestoneReward.day === d) {
+        claimTapReward();
+    }
+}
+
+// ==================== 碰卡弹窗 ====================
+function simulateTap() {
+    // 随机选一个网吧
+    currentCafeIndex = Math.floor(Math.random() * INTERNET_CAFES.length);
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+
+    // 准备弹窗内容
+    document.getElementById('tapModalIcon').textContent = cafe.icon;
+    document.getElementById('tapModalTitle').textContent = '碰卡成功！';
+    document.getElementById('tapModalAddr').textContent = cafe.name + ' · ' + cafe.addr;
+
+    // 增加打卡
+    if (streakDays < 7) {
+        streakDays++;
+        const milestone = STREAK_MILESTONES[streakDays];
+        if (milestone) {
+            pendingMilestoneReward = { day: streakDays, ...milestone };
+        }
+    }
+
+    document.getElementById('tapModalStreak').textContent = streakDays;
+
+    // 里程碑奖励提示
+    const rewardDiv = document.getElementById('tapModalReward');
+    const rewardText = document.getElementById('tapModalRewardText');
+    if (pendingMilestoneReward) {
+        rewardDiv.classList.add('show');
+        rewardText.textContent = `🎁 D${pendingMilestoneReward.day} 里程碑达成！${pendingMilestoneReward.icon} ${pendingMilestoneReward.name} 待领取`;
+    } else {
+        rewardDiv.classList.remove('show');
+    }
+
+    renderAll();
+    openModal('tapModal');
+}
+
+function claimTapReward() {
+    // 领取里程碑奖励
+    if (pendingMilestoneReward) {
+        const now = new Date();
+        const timeStr = `${now.getMonth()+1}月${now.getDate()}日 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        claimedRewards.push({
+            ...pendingMilestoneReward,
+            claimedAt: timeStr
+        });
+        showToast(`🎉 D${pendingMilestoneReward.day} 奖励已发放：${pendingMilestoneReward.name}`);
+        pendingMilestoneReward = null;
+    } else {
+        showToast('✅ 权益已确认，快去享受吧！');
+    }
+
+    closeModal('tapModal');
+    renderAll();
+}
+
+// ==================== 上机模块 ====================
+function selectPackage(el) {
+    document.querySelectorAll('.package-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    selectedPackage = el.dataset.pkg;
+}
+
+function startMachine() {
+    const machineNo = document.getElementById('machineNo').textContent.replace('号', '');
+    const pkg = MACHINE_PACKAGES[selectedPackage];
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+    const now = new Date();
+    const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+    machineSessions.push({
+        machineNo: machineNo,
+        pkg: selectedPackage,
+        pkgName: pkg.name,
+        price: pkg.price,
+        cafeName: cafe.name,
+        startedAt: timeStr
+    });
+
+    // 模拟空闲机位减少
+    const availEl = document.getElementById('availableCount');
+    const current = parseInt(availEl.firstChild.textContent);
+    if (current > 1) availEl.firstChild.textContent = (current - 1);
+
+    showToast(`🚀 ${machineNo}号机已开机！${pkg.name} ${pkg.price} · 畅玩愉快`);
+
+    // 重新随机分配机位
+    document.getElementById('machineNo').innerHTML = String(Math.floor(Math.random() * 30) + 1).padStart(2, '0') + '<span class="unit">号</span>';
+    renderAll();
+}
+
+// ==================== 其他交互 ====================
+function openAlipay() {
+    showToast('💙 正在跳转支付宝 App...');
+}
+
+function joinCommunity() {
+    const cafe = INTERNET_CAFES[currentCafeIndex];
+    showToast(`✅ 已添加到：${cafe.groupName}`);
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timeout);
+    t._timeout = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==================== 初始化 ====================
+renderAll();
+</script>
+
+</body>
+</html>

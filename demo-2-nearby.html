@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>推荐附近点位 · 互动Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #ffd700; --orange: #ff8c00; --deep-orange: #e67e00;
+            --red-orange: #ff6b35; --deep-purple: #1a0533;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: #ffffff; color: #2d2d2d;
+            min-height: 100vh; display: flex; justify-content: center; padding: 20px;
+        }
+
+        .phone {
+            width: 390px; min-height: 780px; background: #f8f8f8;
+            border-radius: 32px; overflow: hidden; border: 3px solid #ddd;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18); position: relative;
+            display: flex; flex-direction: column;
+        }
+        .phone-header {
+            background: #fff; padding: 14px 20px; display: flex;
+            align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .back-btn {
+            color: var(--deep-orange); font-size: 15px; font-weight: 700; cursor: pointer;
+            border: none; background: none; text-decoration: none;
+        }
+        .phone-title { font-size: 16px; font-weight: 700; color: #2d2d2d; }
+
+        .phone-body {
+            flex: 1; padding: 16px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 14px; position: relative;
+        }
+
+        /* 页面切换 */
+        .page {
+            display: none; flex-direction: column; gap: 14px;
+            animation: fadeIn 0.45s ease-out;
+        }
+        .page.active { display: flex; }
+
+        /* ===== 首页 ===== */
+        .home-banner {
+            background: linear-gradient(135deg, var(--deep-purple), #2a1060);
+            border-radius: 18px; padding: 24px 20px; color: #fff; text-align: center;
+        }
+        .home-banner .nfc-icon {
+            font-size: 52px; margin-bottom: 8px;
+            animation: pulseNFC 1.8s ease-in-out infinite;
+        }
+        .home-banner h2 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+        .home-banner p { font-size: 13px; color: rgba(255,255,255,0.7); }
+
+        .store-intro {
+            background: #fff; border-radius: 14px; padding: 18px; border: 1.5px solid #eee;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .store-intro-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+        }
+        .store-intro-info { flex: 1; }
+        .store-intro-name { font-size: 16px; font-weight: 700; color: #2d2d2d; }
+        .store-intro-addr { font-size: 12px; color: #999; margin-top: 2px; }
+        .store-intro-dist { font-size: 12px; color: var(--deep-orange); font-weight: 600; margin-top: 2px; }
+
+        .tap-nfc-btn {
+            width: 100%; padding: 16px; border-radius: 16px; border: none;
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; font-size: 17px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 6px 24px rgba(230,126,0,0.35);
+            transition: all 0.3s ease; letter-spacing: 2px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .tap-nfc-btn:hover { transform: scale(1.03); }
+        .tap-nfc-btn.tapped {
+            background: linear-gradient(135deg, #00c853, #00e676);
+            animation: none; pointer-events: none;
+        }
+
+        /* 碰卡成功提示 */
+        .nfc-success {
+            display: none; background: rgba(0,200,83,0.1); border: 1.5px solid rgba(0,200,83,0.3);
+            border-radius: 14px; padding: 14px; text-align: center;
+        }
+        .nfc-success.show { display: block; animation: fadeIn 0.4s ease-out; }
+        .nfc-success .check-icon {
+            font-size: 36px; margin-bottom: 4px;
+        }
+        .nfc-success .msg { font-size: 14px; font-weight: 700; color: #00c853; }
+        .nfc-success .sub { font-size: 12px; color: #666; margin-top: 2px; }
+
+        /* ===== 功能页 ===== */
+        .location-bar {
+            background: linear-gradient(135deg, #fff, #fef3e6);
+            border: 1.5px solid rgba(230,126,0,0.2);
+            border-radius: 14px; padding: 14px 16px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .loc-icon {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--orange));
+            display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+        }
+        .loc-info { flex: 1; }
+        .loc-name { font-size: 14px; font-weight: 700; color: #2d2d2d; }
+        .loc-addr { font-size: 12px; color: #999; margin-top: 2px; }
+
+        .store-card {
+            background: #fff; border-radius: 14px; padding: 16px; border: 1.5px solid #eee;
+            display: flex; align-items: center; gap: 12px; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+        .store-card:hover { border-color: var(--deep-orange); box-shadow: 0 4px 16px rgba(230,126,0,0.15); transform: translateX(3px); }
+        .store-card.navigating { border-color: #00c853; background: rgba(0,200,83,0.05); }
+        .store-rank {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 900; flex-shrink: 0;
+        }
+        .store-rank.far { background: #bbb; }
+        .store-info { flex: 1; min-width: 0; }
+        .store-name { font-size: 15px; font-weight: 700; color: #2d2d2d; }
+        .store-address { font-size: 12px; color: #999; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .store-meta { display: flex; gap: 10px; margin-top: 4px; font-size: 11px; color: #aaa; }
+        .nav-btn {
+            background: linear-gradient(135deg, var(--deep-orange), var(--orange));
+            color: #fff; border: none; border-radius: 18px; padding: 7px 16px;
+            font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;
+        }
+        .nav-btn:hover { transform: scale(1.05); box-shadow: 0 3px 12px rgba(230,126,0,0.4); }
+        .nav-btn.done { background: linear-gradient(135deg, #00c853, #00e676); }
+        .distance-badge {
+            background: rgba(230,126,0,0.1); color: var(--deep-orange);
+            font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 10px;
+        }
+
+        .info-bar {
+            background: #fff; border: 1.5px solid rgba(230,126,0,0.2);
+            border-radius: 14px; padding: 14px; margin-top: auto;
+        }
+        .info-bar h4 { font-size: 13px; font-weight: 700; color: var(--deep-orange); margin-bottom: 6px; }
+        .info-bar p { font-size: 12px; color: #666; line-height: 1.7; }
+
+        .reward-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 20;
+            display: none; align-items: center; justify-content: center;
+        }
+        .reward-modal-overlay.show { display: flex; }
+        .reward-popup {
+            background: #fff; border-radius: 22px; padding: 30px 22px; text-align: center;
+            width: 300px; animation: popIn 0.45s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.35); position: relative; overflow: hidden;
+        }
+        .reward-popup::before {
+            content: ''; position: absolute; top: -50px; left: -50px;
+            width: 120px; height: 120px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.3), transparent 70%);
+        }
+        .reward-emoji { font-size: 56px; margin-bottom: 10px; position: relative; }
+        .reward-title { font-size: 14px; color: #999; margin-bottom: 4px; }
+        .reward-prize { font-size: 22px; font-weight: 900; color: var(--deep-orange); margin-bottom: 6px; }
+        .reward-desc { font-size: 13px; color: #666; margin-bottom: 18px; line-height: 1.6; }
+        .reward-claim-btn {
+            background: linear-gradient(135deg, var(--gold), var(--deep-orange));
+            color: #fff; border: none; border-radius: 24px; padding: 12px 40px;
+            font-size: 16px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(230,126,0,0.4);
+            transition: all 0.3s ease; letter-spacing: 1px;
+        }
+        .reward-claim-btn:hover { transform: scale(1.05); box-shadow: 0 8px 28px rgba(230,126,0,0.55); }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.8) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .nav-toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #2d2d2d; color: #fff; padding: 12px 28px; border-radius: 24px;
+            font-size: 14px; font-weight: 600; z-index: 10;
+            display: none; animation: fadeIn 0.4s ease-out;
+        }
+        .nav-toast.show { display: flex; align-items: center; gap: 8px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseNFC { 0%,100%{transform:scale(1);} 50%{transform:scale(1.15);} }
+        @keyframes pulse { 0%,100%{transform:scale(1);box-shadow:0 6px 24px rgba(230,126,0,0.35);} 50%{transform:scale(1.03);box-shadow:0 10px 32px rgba(230,126,0,0.5);} }
+
+        @media (max-width: 420px) {
+            .phone { width: 100%; border-radius: 0; border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="phone-header">
+            <a href="index.html" class="back-btn">← 返回总览</a>
+            <span class="phone-title" id="headerTitle">碰卡</span>
+        </div>
+        <div class="phone-body">
+            <!-- ===== 首页：碰卡入口 ===== -->
+            <div class="page active" id="homePage">
+                <div class="home-banner">
+                    <div class="nfc-icon">📳</div>
+                    <h2>NFC 碰一碰</h2>
+                    <p>将手机靠近门店 NFC 标识碰卡</p>
+                </div>
+                <div class="store-intro">
+                    <div class="store-intro-icon">🏬</div>
+                    <div class="store-intro-info">
+                        <div class="store-intro-name">王者人生体验店 · 三里屯</div>
+                        <div class="store-intro-addr">朝阳区三里屯太古里南区B1</div>
+                        <div class="store-intro-dist">🏷️ NFC 标识已就绪</div>
+                    </div>
+                </div>
+                <button class="tap-nfc-btn" id="tapNfcBtn" onclick="doNfcTap()">📳 点击模拟碰卡</button>
+                <div class="nfc-success" id="nfcSuccess">
+                    <div class="check-icon">✅</div>
+                    <div class="msg">碰卡成功！获得王者荣耀权益</div>
+                    <div class="sub">正在加载附近推荐门店...</div>
+                </div>
+                <div class="info-bar">
+                    <h4>💡 玩法说明</h4>
+                    <p>到店后靠近 NFC 标识碰卡，成功后自动推荐附近可碰卡门店，按距离排序引导就近转化。</p>
+                </div>
+            </div>
+
+            <!-- ===== 功能页：附近推荐 ===== -->
+            <div class="page" id="funcPage">
+                <div class="location-bar">
+                    <div class="loc-icon">📍</div>
+                    <div class="loc-info">
+                        <div class="loc-name">北京 · 朝阳大悦城</div>
+                        <div class="loc-addr">刚在此碰卡成功 ✅</div>
+                    </div>
+                    <div class="distance-badge">当前</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:15px;font-weight:700;">📡 附近可碰卡门店</span>
+                    <span style="font-size:12px;color:#999;">按距离排序</span>
+                </div>
+                <div id="storeList"></div>
+                <div class="info-bar">
+                    <h4>💡 玩法说明</h4>
+                    <p>碰卡成功后自动推荐附近门店，按距离排序。点击"导航前往"模拟导航到店，最短路径引导提升就近转化率。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-toast" id="toast"></div>
+
+    <div class="reward-modal-overlay" id="rewardModal">
+        <div class="reward-popup">
+            <div class="reward-emoji">🎁</div>
+            <div class="reward-title">首次碰卡奖励</div>
+            <div class="reward-prize">💎 钻石×50</div>
+            <div class="reward-desc">奖励已发放至你的账户<br/><span style="font-size:11px;color:#aaa;">继续查看附近可碰卡门店</span></div>
+            <button class="reward-claim-btn" onclick="claimReward()">领取并查看门店</button>
+        </div>
+    </div>
+
+    <script>
+    const stores = [
+        { name: '王者人生体验店 · 三里屯', addr: '朝阳区三里屯太古里南区B1', dist: 320, game: '王者荣耀', icon: '🏬' },
+        { name: 'coco都可 · 望京店', addr: '朝阳区望京SOHO T1 1F', dist: 480, game: '王者荣耀', icon: '🥤' },
+        { name: '古茗 · 国贸店', addr: '朝阳区建国门外大街1号', dist: 780, game: '王者荣耀', icon: '🧋' },
+        { name: '蜜雪冰城 · 双井店', addr: '朝阳区广渠路66号院', dist: 1200, game: '王者荣耀', icon: '🍦' },
+        { name: '丰巢 · 劲松柜', addr: '朝阳区劲松街道农光里', dist: 1900, game: '和平精英', icon: '📦' },
+        { name: '极兔速递 · 潘家园', addr: '朝阳区潘家园街道华威里', dist: 2500, game: '和平精英', icon: '🚚' },
+        { name: '美团外卖站 · 青年路', addr: '朝阳区青年路29号院', dist: 3400, game: '王者荣耀', icon: '🛵' },
+    ];
+
+    const toast = document.getElementById('toast');
+
+    function doNfcTap() {
+        const btn = document.getElementById('tapNfcBtn');
+        btn.classList.add('tapped');
+        btn.textContent = '📡 碰卡中...';
+        document.getElementById('nfcSuccess').classList.add('show');
+
+        setTimeout(() => {
+            document.getElementById('rewardModal').classList.add('show');
+        }, 1500);
+    }
+
+    function claimReward() {
+        document.getElementById('rewardModal').classList.remove('show');
+        document.getElementById('headerTitle').textContent = '附近碰卡点位';
+        document.getElementById('homePage').classList.remove('active');
+        document.getElementById('funcPage').classList.add('active');
+        renderStoreList();
+    }
+
+    function renderStoreList() {
+        const list = document.getElementById('storeList');
+        list.innerHTML = '';
+        stores.forEach((s, i) => {
+            const card = document.createElement('div');
+            card.className = 'store-card';
+            card.innerHTML = `
+                <div class="store-rank ${s.dist > 2000 ? 'far' : ''}">${i + 1}</div>
+                <div class="store-info">
+                    <div class="store-name">${s.icon} ${s.name}</div>
+                    <div class="store-address">${s.addr}</div>
+                    <div class="store-meta"><span>${s.game}</span><span>·</span><span>${s.dist}m</span></div>
+                </div>
+                <button class="nav-btn" data-name="${s.name}" data-dist="${s.dist}">导航前往</button>
+            `;
+            list.appendChild(card);
+        });
+        bindNavBtns();
+    }
+
+    function bindNavBtns() {
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const name = this.dataset.name, dist = this.dataset.dist;
+                if (this.classList.contains('done')) return;
+                this.classList.add('done'); this.textContent = '导航中...';
+                this.closest('.store-card').classList.add('navigating');
+                toast.innerHTML = `🗺️ 正在导航至：<strong>${name}</strong> · 约${dist}m`;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.innerHTML = `🎉 已到达 <strong>${name}</strong>，快去碰卡吧！`;
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        this.classList.remove('done');
+                        this.textContent = '导航前往';
+                        this.closest('.store-card').classList.remove('navigating');
+                    }, 2000);
+                }, 3000);
+            });
+        });
+    }
+    </script>
+</body>
+</html>

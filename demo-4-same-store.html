@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模式4 · 同点连续打卡额外礼 | 留存与分享 Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        @import url('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold:#ffd700; --orange:#ff8c00; --deep-orange:#e67e00;
+            --red-orange:#ff6b35; --deep-purple:#1a0533; --green:#00c853;
+        }
+        body { font-family:'Noto Sans SC',sans-serif; background:#fff; color:#2d2d2d;
+            min-height:100vh; position:relative; padding:30px 20px 50px; overflow-x:hidden; }
+        body::before { content:''; position:fixed; top:-80px; left:-60px; width:320px; height:320px;
+            background:radial-gradient(circle, rgba(255,215,0,0.08) 0%, transparent 70%); pointer-events:none; z-index:0; }
+        body::after { content:''; position:fixed; bottom:-100px; right:-60px; width:360px; height:360px;
+            background:radial-gradient(circle, rgba(255,140,0,0.07) 0%, transparent 70%); pointer-events:none; z-index:0; }
+        .container { max-width:1320px; margin:0 auto; position:relative; z-index:1; }
+
+        .back-link { display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+            color:var(--deep-orange); font-size:14px; font-weight:600; margin-bottom:24px; transition:gap .3s; }
+        .back-link:hover { gap:10px; }
+
+        .header { text-align:center; margin-bottom:34px; animation:fadeInDown .8s ease-out; }
+        .brand-tags { display:flex; justify-content:center; gap:12px; margin-bottom:12px; }
+        .brand-tag { background:rgba(255,140,0,0.1); border:1px solid rgba(255,140,0,0.3); border-radius:20px;
+            padding:5px 16px; color:var(--deep-orange); font-size:15px; font-weight:500; display:flex; align-items:center; gap:6px; }
+        .header h1 { font-size:42px; font-weight:900; color:var(--deep-orange); margin-bottom:8px; }
+        .header .subtitle { color:#666; font-size:16px; letter-spacing:2px; }
+        .mode-label { display:inline-block; margin-top:14px; font-size:13px; font-weight:700; color:var(--deep-orange);
+            background:rgba(255,140,0,0.1); border:1px solid rgba(255,140,0,0.25); border-radius:14px; padding:5px 18px; }
+
+        .steps-row { display:flex; align-items:stretch; gap:0; }
+        .step-card { flex:1; background:#fff; border-radius:24px; border:2px solid var(--deep-orange);
+            padding:24px 22px 28px; position:relative; overflow:hidden; display:flex; flex-direction:column;
+            box-shadow:0 4px 20px rgba(0,0,0,0.08), 0 8px 32px rgba(230,126,0,0.08); transition:all .35s cubic-bezier(.4,0,.2,1); }
+        .step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px;
+            background:linear-gradient(90deg,var(--gold),var(--red-orange),var(--gold)); }
+        .step-card:hover { transform:translateY(-3px); box-shadow:0 8px 36px rgba(0,0,0,0.12),0 12px 40px rgba(230,126,0,0.16); }
+        .step-card:nth-child(1){animation:fadeInLeft .8s ease-out .15s both;}
+        .step-card:nth-child(3){animation:fadeInUp .8s ease-out .3s both;}
+        .step-card:nth-child(5){animation:fadeInRight .8s ease-out .45s both;}
+
+        .step-header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+        .step-number { width:46px; height:46px; border-radius:13px; flex-shrink:0;
+            background:linear-gradient(135deg,var(--gold),var(--orange)); display:flex; align-items:center; justify-content:center;
+            font-size:22px; font-weight:900; color:var(--deep-purple); box-shadow:0 4px 14px rgba(255,215,0,0.4); position:relative; }
+        .step-number::after { content:''; position:absolute; inset:-3px; border-radius:16px; border:2px solid rgba(255,215,0,0.35); animation:pulse-border 2s ease-in-out infinite; }
+        .step-title { font-size:19px; font-weight:700; color:#2d2d2d; line-height:1.4; }
+        .step-title .hl { color:var(--deep-orange); }
+
+        .proto { background:rgba(255,140,0,0.04); border:2px dashed rgba(255,215,0,0.35); border-radius:16px;
+            min-height:210px; padding:18px; margin-bottom:16px; display:flex; flex-direction:column; gap:12px; align-items:center; justify-content:center; }
+        .proto-label { align-self:flex-start; font-size:12px; font-weight:700; background:var(--gold); border-radius:10px; padding:3px 12px; color:#1a0533; }
+
+        /* 门店 + 计数徽章 */
+        .store-box { display:flex; flex-direction:column; align-items:center; gap:10px; }
+        .store-ico { width:70px; height:70px; border-radius:18px; border:3px solid var(--deep-orange);
+            background:#fff; display:flex; align-items:center; justify-content:center; font-size:34px; box-shadow:0 6px 18px rgba(230,126,0,0.18); }
+        .count-badge { position:relative; }
+        .count-badge .num { font-size:34px; font-weight:900; color:var(--deep-orange); }
+        .count-badge .x { font-size:18px; font-weight:700; color:#999; }
+        .pulse-ring { position:absolute; inset:-6px; border-radius:50%; border:2px solid rgba(255,140,0,0.4); animation:pulse-border 2s ease-in-out infinite; }
+
+        .phone { width:110px; height:150px; border:3px solid var(--deep-orange); border-radius:16px; background:#fff;
+            display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(230,126,0,0.18); }
+
+        .gift-burst { width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,140,0,0.1));
+            border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:48px; position:relative; }
+        .gift-burst::after { content:'×3 额外礼'; position:absolute; bottom:-14px; font-size:13px; font-weight:700; color:#fff;
+            background:linear-gradient(135deg,var(--orange),var(--red-orange)); border-radius:12px; padding:3px 12px; box-shadow:0 3px 10px rgba(255,140,0,0.3); }
+
+        .step-desc { font-size:14px; line-height:1.7; color:#555; flex:1; }
+        .step-desc .em { color:var(--deep-orange); font-weight:600; }
+
+        .arrow-connector { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 10px; flex-shrink:0; }
+        .arrow-connector .a-line { width:42px; height:3px; background:linear-gradient(90deg,rgba(255,140,0,0.3),var(--orange),rgba(255,140,0,0.3)); border-radius:2px; }
+        .arrow-connector .a-icon { font-size:30px; color:var(--orange); animation:bounce-arrow 1.5s ease-in-out infinite; line-height:1; }
+        @keyframes bounce-arrow {0%,100%{transform:translateX(0);}50%{transform:translateX(6px);}}
+
+        .explain { margin-top:36px; display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+        .ex-card { background:#fff; border:2px solid rgba(230,126,0,0.4); border-radius:18px; padding:20px; box-shadow:0 4px 18px rgba(230,126,0,0.08); }
+        .ex-card h3 { font-size:16px; font-weight:700; color:var(--deep-orange); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+        .ex-card p { font-size:14px; line-height:1.7; color:#555; }
+        .ex-card .tip { background:rgba(255,140,0,0.06); border:1px solid rgba(255,140,0,0.2); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:13px; color:#666; line-height:1.6; }
+        .ex-card .tip strong { color:var(--deep-orange); }
+
+        @keyframes fadeInDown{from{opacity:0;transform:translateY(-30px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes fadeInLeft{from{opacity:0;transform:translateX(-40px);}to{opacity:1;transform:translateX(0);}}
+        @keyframes fadeInRight{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
+        @keyframes pulse-border{0%,100%{opacity:0.3;transform:scale(1);}50%{opacity:0.7;transform:scale(1.06);}}
+
+        @media (max-width:900px){
+            .header h1{font-size:30px;}
+            .steps-row{flex-direction:column; gap:18px;}
+            .arrow-connector{padding:8px 0;}
+            .arrow-connector .a-icon{transform:rotate(90deg);}
+            @keyframes bounce-arrow{0%,100%{transform:rotate(90deg) translateX(0);}50%{transform:rotate(90deg) translateX(6px);}}
+            .explain{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="index.html">← 返回总览</a>
+
+        <div class="header">
+            <div class="brand-tags">
+                <span class="brand-tag"><span>👑</span> 王者荣耀</span>
+                <span class="brand-tag"><span>🏆</span> 王者人生</span>
+            </div>
+            <h1>模式 4 · 同点连续打卡额外礼</h1>
+            <div class="subtitle">同一门店多次碰卡，达次数额外发奖</div>
+            <div class="mode-label">🔁 门店复购 · 习惯养成</div>
+        </div>
+
+        <div class="steps-row">
+            <!-- 步骤1 -->
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">01</div>
+                    <div class="step-title">第 1 次 <span class="hl">碰卡</span></div>
+                </div>
+                <div class="proto">
+                    <span class="proto-label">🏪 同店碰卡原型</span>
+                    <div class="store-box">
+                        <div class="store-ico">🏬</div>
+                        <div class="count-badge"><span class="num">×1</span><div class="pulse-ring"></div></div>
+                    </div>
+                </div>
+                <div class="step-desc">
+                    <p>用户在 <span class="em">同一门店</span> 首次 NFC 碰卡，记录该店打卡计数为 1。</p>
+                </div>
+            </div>
+
+            <div class="arrow-connector"><div class="a-line"></div><div class="a-icon">➤</div><div class="a-line"></div></div>
+
+            <!-- 步骤2 -->
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">02</div>
+                    <div class="step-title">第 2 次 <span class="hl">碰卡</span></div>
+                </div>
+                <div class="proto">
+                    <span class="proto-label">📈 计数累加原型</span>
+                    <div class="store-box">
+                        <div class="store-ico">🏬</div>
+                        <div class="count-badge"><span class="num">×2</span><div class="pulse-ring"></div></div>
+                    </div>
+                </div>
+                <div class="step-desc">
+                    <p>再次到店碰卡，<span class="em">同店计数 +1</span>，进度暗示「再来 1 次有额外礼」。</p>
+                </div>
+            </div>
+
+            <div class="arrow-connector"><div class="a-line"></div><div class="a-icon">➤</div><div class="a-line"></div></div>
+
+            <!-- 步骤3 -->
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">03</div>
+                    <div class="step-title">第 3 次 <span class="hl">额外礼</span></div>
+                </div>
+                <div class="proto">
+                    <span class="proto-label">🎁 额外礼原型</span>
+                    <div class="gift-burst">🎉</div>
+                </div>
+                <div class="step-desc">
+                    <p>达阈值（如 3 次）<span class="em">自动发放额外礼</span>，强化同店复购与到店习惯。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="explain">
+            <div class="ex-card">
+                <h3>⚙️ 玩法机制</h3>
+                <p>对单个门店 NFC 碰卡做去重计数（可按天/按周），达到设定次数阈值即发放该店额外奖励，可多档。</p>
+                <div class="tip"><strong>配置提示：</strong>同店计数周期（日/周/月）、阈值与奖励档在后台配置。</div>
+            </div>
+            <div class="ex-card">
+                <h3>📈 留存抓手</h3>
+                <p>「再来一次有奖」直接拉动同一门店重复到访，培养用户到店习惯，提升单店复购率。</p>
+                <div class="tip"><strong>适用：</strong>社区型门店、高频消费场景（茶饮/便利店）。</div>
+            </div>
+            <div class="ex-card">
+                <h3>💡 接入建议</h3>
+                <p>复用门店 NFC 事件 + 同店计数服务；前端新增「本店打卡进度」提示组件，零新增硬件。</p>
+                <div class="tip"><strong>已接入游戏：</strong>5 天可上线；换肤 3 天。</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
