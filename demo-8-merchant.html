@@ -143,65 +143,7 @@
         .card-title { font-size: 15px; font-weight: 900; color: #2d2d2d; }
         .card-sub { font-size: 11px; color: #999; margin-top: 2px; }
 
-        /* ===== 1. 连续打卡 ===== */
-        .streak-card .card-icon { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
-        .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 30px; }
-        .streak-cell {
-            aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
-            border: 2px solid #eee; background: #fafafa; color: #bbb; transition: all 0.3s;
-        }
-        .streak-cell.done {
-            background: linear-gradient(135deg, var(--zx-red), #ff5252);
-            border-color: var(--zx-red); color: #fff;
-        }
-        .streak-cell.today { border-color: var(--zx-red); border-style: dashed; color: var(--zx-red); }
-        .streak-cell.milestone { position: relative; }
-        .streak-cell.milestone::after {
-            content: attr(data-gift); position: absolute; top: -8px; right: -6px; font-size: 12px;
-        }
-        /* 券奖励气泡（挂在里程碑格子下方） */
-        .sc-bubble {
-            position: absolute; top: calc(100% + 7px); left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #fff8e1, #ffe082);
-            color: #8d6e00; font-size: 8px; font-weight: 800;
-            padding: 2px 5px; border-radius: 5px; white-space: nowrap;
-            line-height: 1.3; z-index: 2;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-        }
-        .sc-bubble::before {
-            content: ''; position: absolute; top: -4px; left: 50%;
-            transform: translateX(-50%);
-            border: 4px solid transparent; border-bottom-color: #fff8e1;
-        }
-        .streak-cell.done .sc-bubble {
-            background: linear-gradient(135deg, var(--zx-red), #ff5252); color: #fff;
-        }
-        .streak-cell.done .sc-bubble::before { border-bottom-color: var(--zx-red); }
-        /* 重点气泡（D3 免单券 / D7 现金）强化展示 */
-        .sc-bubble.hero {
-            background: linear-gradient(135deg, var(--zx-red), #ff5252);
-            color: #fff; font-size: 8.5px; font-weight: 900;
-            padding: 3px 6px; letter-spacing: -0.2px;
-            box-shadow: 0 2px 8px rgba(230,0,18,0.35);
-            animation: bubblePulse 2s ease-in-out infinite;
-        }
-        .sc-bubble.hero::before { border-bottom-color: var(--zx-red); }
-        @keyframes bubblePulse {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.08); }
-        }
-        .streak-cell.done .sc-bubble.hero {
-            background: linear-gradient(135deg, #b30000, var(--zx-red));
-            animation: none;
-        }
-        .streak-info-row { display: flex; justify-content: space-between; align-items: center; }
-        .streak-count { font-size: 13px; color: #666; }
-        .streak-count strong { color: var(--zx-red); font-size: 18px; }
-        .streak-reward-preview { font-size: 11px; color: #999; }
-
-        /* ===== 2. 游戏活动入口 ===== */
+        /* ===== 1. 游戏活动入口 ===== */
         .game-card { border-color: rgba(124,77,255,0.18); }
         .game-card .card-icon { background: linear-gradient(135deg, #ede7f6, #d1c4e9); }
         .game-badge {
@@ -500,34 +442,6 @@
         .mg-btn.claimed:hover { transform: none; box-shadow: none; }
         .more-game-item.claimed { border-color: #a5d6a7; background: #fafffa; }
 
-        /* ===== 弹窗内：游戏道具预览 ===== */
-        .modal-game-preview {
-            margin: 12px 0 14px; padding: 14px 12px;
-            background: linear-gradient(135deg, #fffdf5, #fff8e1);
-            border: 2px solid #FFD100; border-radius: 14px;
-        }
-        .mgp-title {
-            font-size: 13px; font-weight: 900; color: #8d6e00;
-            margin-bottom: 10px; text-align: center;
-        }
-        .mgp-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-        }
-        .mgp-item {
-            background: #fff; border: 1px solid #ffe0b2; border-radius: 10px;
-            padding: 10px 4px; text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-        .mgp-item .mgp-icon { font-size: 24px; margin-bottom: 4px; }
-        .mgp-item .mgp-name {
-            font-size: 10px; font-weight: 700; color: #666;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .mgp-item .mgp-bonus {
-            font-size: 11px; color: #d84315; font-weight: 900; margin-top: 3px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-
         /* ===== 3. 门店社群 ===== */
         .community-card .card-icon { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
         .community-card { border-color: rgba(33,150,243,0.15); }
@@ -750,6 +664,11 @@
             line-height: 1.2; margin-bottom: 4px;
             text-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
+        .tmr-valid {
+            display: inline-block; font-size: 10px; font-weight: 800;
+            color: #fff3cd; background: rgba(0,0,0,0.22);
+            padding: 3px 9px; border-radius: 8px; margin-bottom: 5px;
+        }
         .tmr-tip {
             font-size: 10px; color: rgba(255,255,255,0.85); font-weight: 600;
         }
@@ -766,6 +685,80 @@
             margin-top: 8px; font-weight: 500;
         }
         .modal-btn.secondary:hover { background: #eee; box-shadow: none; }
+
+        /* ===== 游戏任务换鸡排券 ===== */
+        .task2coupon-card .card-icon { background: linear-gradient(135deg, #e8eaf6, #c5cae9); }
+        .task2coupon-card { border-color: rgba(124,77,255,0.15); }
+        .t2c-list { display: flex; flex-direction: column; gap: 10px; }
+        .t2c-row {
+            display: flex; align-items: center; gap: 8px;
+            background: #fafafa; border: 1px solid #f0f0f0;
+            border-radius: 12px; padding: 10px;
+            transition: all 0.25s;
+        }
+        .t2c-row.done { background: #fafffa; border-color: #a5d6a7; }
+        /* 左：游戏任务 */
+        .t2c-game {
+            display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0;
+        }
+        .t2c-game-icon {
+            width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+        }
+        .t2c-game-text { min-width: 0; }
+        .t2c-game-name {
+            font-size: 11px; font-weight: 800; color: #2d2d2d;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .t2c-game-task {
+            font-size: 9px; color: #999; font-weight: 600; margin-top: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        /* 中：箭头 */
+        .t2c-arrow {
+            font-size: 13px; color: #ccc; flex-shrink: 0; font-weight: 900;
+        }
+        .t2c-row.done .t2c-arrow { color: var(--zx-red); }
+        /* 右：可换的券 */
+        .t2c-coupon {
+            flex-shrink: 0; text-align: center; min-width: 62px;
+            background: linear-gradient(135deg, #fff8f8, #ffebee);
+            border: 1px dashed #ffcdd2; border-radius: 8px;
+            padding: 5px 7px; position: relative;
+        }
+        .t2c-row.done .t2c-coupon {
+            background: linear-gradient(135deg, var(--zx-red), #ff5252);
+            border-color: var(--zx-red); border-style: solid;
+        }
+        .t2c-coupon-val {
+            font-size: 12px; font-weight: 900; color: var(--zx-red); line-height: 1.2;
+        }
+        .t2c-row.done .t2c-coupon-val { color: #fff; }
+        .t2c-coupon-name {
+            font-size: 8px; color: #999; font-weight: 600; margin-top: 1px;
+        }
+        .t2c-row.done .t2c-coupon-name { color: rgba(255,255,255,0.9); }
+        /* 右：操作按钮 */
+        .t2c-btn {
+            flex-shrink: 0; padding: 6px 10px; border: none; border-radius: 8px;
+            font-size: 10px; font-weight: 800; cursor: pointer;
+            background: var(--purple); color: #fff;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .t2c-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(124,77,255,0.3); }
+        .t2c-btn.claim {
+            background: linear-gradient(135deg, var(--zx-gold), #ff8f00); color: #5a4500;
+            animation: pulseGold 1.5s ease-in-out infinite;
+        }
+        .t2c-btn.claimed {
+            background: #e8f5e9; color: #2e7d32; cursor: default;
+        }
+        .t2c-btn.claimed:hover { transform: none; box-shadow: none; }
+        .t2c-hint {
+            margin-top: 10px; padding: 8px 10px; border-radius: 8px;
+            background: #f7f7f7; font-size: 10px; color: #999;
+            text-align: center; font-weight: 600;
+        }
 
         /* ===== 商家广告位 ===== */
         .merchant-ad {
@@ -892,23 +885,7 @@
             <div class="ad-cta">去看看</div>
         </div>
 
-        <!-- 1. 连续打卡 -->
-        <div class="card streak-card">
-            <div class="card-header">
-                <div class="card-icon">🔥</div>
-                <div>
-                    <div class="card-title">连续碰卡签到</div>
-                    <div class="card-sub">中断清零，坚持就是胜利</div>
-                </div>
-            </div>
-            <div class="streak-grid" id="streakGrid"></div>
-            <div class="streak-info-row">
-                <span class="streak-count">已连续 <strong id="streakDays">0</strong> 天</span>
-                <span class="streak-reward-preview">D1 / D3 / D7 可得鸡排券</span>
-            </div>
-        </div>
-
-        <!-- 2. 用鸡排券购买得游戏权益 -->
+        <!-- 1. 用鸡排券购买得游戏权益 -->
         <div class="card redeem-card">
             <div class="card-header">
                 <div class="card-icon">🍗</div>
@@ -970,6 +947,19 @@
             </div>
         </div>
 
+        <!-- 2. 玩游戏换鸡排券 -->
+        <div class="card task2coupon-card">
+            <div class="card-header">
+                <div class="card-icon">🔄</div>
+                <div>
+                    <div class="card-title">玩游戏、换鸡排券</div>
+                    <div class="card-sub">完成游戏任务，兑换正新鸡排优惠</div>
+                </div>
+            </div>
+            <div class="t2c-list" id="t2cList"></div>
+            <div class="t2c-hint">💡 兑换的鸡排券次日 00:00 起可用，有效期 7 天</div>
+        </div>
+
         <!-- 3. 更多游戏好礼 -->
         <div class="card more-games-card">
             <div class="card-header">
@@ -982,7 +972,7 @@
             <div class="more-games-grid" id="moreGamesGrid"></div>
         </div>
 
-        <!-- 3. 门店社群 -->
+        <!-- 4. 门店社群 -->
         <div class="card community-card">
             <div class="card-header">
                 <div class="card-icon">💬</div>
@@ -1006,11 +996,11 @@
             <div class="card-title" style="margin-bottom:10px;">📋 活动规则</div>
             <div class="rule-item">
                 <div class="rule-dot">1</div>
-                <div class="rule-text">到 <strong>正新鸡排</strong> 合作门店 <strong>NFC 碰卡</strong>，首次即得 <strong>8 折券</strong>，连续碰卡 <strong>3 天</strong> 得 <strong>免单券</strong></div>
+                <div class="rule-text">到 <strong>正新鸡排</strong> 合作门店 <strong>NFC 碰卡</strong>，即可获得 <strong>鸡排优惠券</strong>，券于 <strong>次日 00:00 起可用</strong></div>
             </div>
             <div class="rule-item">
                 <div class="rule-dot">2</div>
-                <div class="rule-text">连续打卡 <strong>中断则清零</strong>，鸡排券可在门店直接核销使用</div>
+                <div class="rule-text">完成 <strong>游戏任务</strong>（登录 / 对局等）可兑换对应 <strong>鸡排券</strong>，有效期 7 天</div>
             </div>
             <div class="rule-item">
                 <div class="rule-dot">3</div>
@@ -1034,7 +1024,7 @@
         <div class="tap-modal-title" id="tapModalTitle">碰卡成功！</div>
         <div class="tap-modal-addr" id="tapModalAddr"></div>
         <div class="tap-modal-stats">
-            <span>连续打卡 <strong id="tapModalStreak">3</strong> 天</span>
+            <span>累计碰卡 <strong id="tapModalStreak">3</strong> 次</span>
             <span class="sep">·</span>
             <span>今日 <strong>+1</strong></span>
         </div>
@@ -1042,14 +1032,10 @@
         <div class="tap-modal-reward" id="tapModalReward">
             <div class="tmr-label">🎁 恭喜获得</div>
             <div class="tmr-name" id="tapModalRewardText"></div>
+            <div class="tmr-valid" id="tapModalValid">⏰ 次日 00:00 起可用</div>
             <div class="tmr-tip">可在点单小程序核销使用</div>
         </div>
-        <button class="modal-btn" onclick="claimTapReward()">🎁 使用后可获得游戏道具</button>
-        <!-- 使用券可得的游戏道具预览 -->
-        <div class="modal-game-preview">
-            <div class="mgp-title">🎮 可获得以下道具</div>
-            <div class="mgp-grid" id="modalGamePreview"></div>
-        </div>
+        <button class="modal-btn" onclick="claimTapReward()">🎉 好的，收下奖励</button>
         <button class="modal-btn secondary" onclick="closeModal('tapModal')">稍后再说</button>
     </div>
 </div>
@@ -1060,7 +1046,7 @@
         <button class="modal-close" onclick="closeModal('rewardsModal')">✕</button>
         <div style="font-size:18px; font-weight:900; color:#1a0533; margin-bottom:16px;">🎁 我的奖励</div>
         <div class="reward-section">
-            <div class="reward-section-title">🔥 连续打卡奖励</div>
+            <div class="reward-section-title">🎫 我的鸡排券</div>
             <div id="streakRewardsList"></div>
         </div>
         <div class="reward-section">
@@ -1116,6 +1102,20 @@ const MORE_GAMES = [
     { id: 'g7', name: 'QQ 飞车',    icon: '🏎️', task: '完成1局竞速', bonus: '点券×500', bg: 'linear-gradient(135deg,#e0f7fa,#b2ebf2)' },
     { id: 'g8', name: '金铲铲之战', icon: '♟️', task: '登录游戏', bonus: '棋子×3',   bg: 'linear-gradient(135deg,#f3e5f5,#e1bee7)' }
 ];
+// 游戏任务 ↔ 鸡排券 兑换关系
+const TASK2COUPON = [
+    { id: 't1', game: '王者荣耀',   icon: '⚔️', bg: 'linear-gradient(135deg,#fff3e0,#ffe0b2)',
+      task: '登录游戏',        cVal: '免单',  cName: '免单券' },
+    { id: 't2', game: '和平精英',   icon: '🏹', bg: 'linear-gradient(135deg,#e3f2fd,#bbdefb)',
+      task: '完成 1 局对战',   cVal: '8折',   cName: '折扣券' },
+    { id: 't3', game: '三角洲行动', icon: '🎯', bg: 'linear-gradient(135deg,#e8f5e9,#c8e6c9)',
+      task: '完成 1 局烽火地带', cVal: '5元',  cName: '现金券' },
+    { id: 't4', game: '英雄联盟',   icon: '🛡️', bg: 'linear-gradient(135deg,#ede7f6,#d1c4e9)',
+      task: '完成 1 局排位',   cVal: '买一送一', cName: '双人券' }
+];
+let t2cTaskDone = {};   // 任务是否完成
+let t2cClaimed = {};    // 券是否已兑换
+
 // 排行榜（已移除卡片展示）
 const LEADERBOARD = [];
 
@@ -1187,8 +1187,41 @@ function renderAll() {
     renderStreakGrid();
     renderCurrentStore();
     renderCoupons();
+    renderTask2Coupon();
     renderMoreGames();
     updateRewardBadge();
+}
+
+// 渲染「玩游戏换鸡排券」
+function renderTask2Coupon() {
+    document.getElementById('t2cList').innerHTML = TASK2COUPON.map(t => {
+        const done = !!t2cTaskDone[t.id];
+        const claimed = !!t2cClaimed[t.id];
+        let btnHTML;
+        if (claimed) {
+            btnHTML = `<button class="t2c-btn claimed" disabled>✓ 已兑换</button>`;
+        } else if (done) {
+            btnHTML = `<button class="t2c-btn claim" onclick="claimT2C('${t.id}')">兑换</button>`;
+        } else {
+            btnHTML = `<button class="t2c-btn" onclick="goT2CTask('${t.id}')">去完成</button>`;
+        }
+        return `
+        <div class="t2c-row ${claimed ? 'done' : ''}">
+            <div class="t2c-game">
+                <div class="t2c-game-icon" style="background:${t.bg};">${t.icon}</div>
+                <div class="t2c-game-text">
+                    <div class="t2c-game-name">${t.game}</div>
+                    <div class="t2c-game-task">${t.task}</div>
+                </div>
+            </div>
+            <span class="t2c-arrow">→</span>
+            <div class="t2c-coupon">
+                <div class="t2c-coupon-val">${t.cVal}</div>
+                <div class="t2c-coupon-name">${t.cName}</div>
+            </div>
+            ${btnHTML}
+        </div>`;
+    }).join('');
 }
 function renderCurrentStore() {
     const store = STORES[currentStoreIndex];
@@ -1208,24 +1241,8 @@ function renderCurrentStore() {
         joinBtn.textContent = '+ 加入门店社群';
     }
 }
-function renderStreakGrid() {
-    let html = '';
-    for (let i = 0; i < 7; i++) {
-        const day = i + 1;
-        let cls = '';
-        if (i < streakDays) cls = 'done';
-        else if (i === streakDays) cls = 'today';
-        const m = STREAK_MILESTONES[day];
-        if (m && m.hero) cls += ' milestone';
-        html += `<div class="streak-cell ${cls}"${m && m.hero ? ` data-gift="${m.icon}"` : ''}>
-            <span>D${day}</span>
-            <span style="font-size:16px;">${i < streakDays ? '✓' : day}</span>
-            ${m ? `<span class="sc-bubble ${m.hero ? 'hero' : ''}">${m.short}</span>` : ''}
-        </div>`;
-    }
-    document.getElementById('streakGrid').innerHTML = html;
-    document.getElementById('streakDays').textContent = streakDays;
-}
+// 连续签到模块已移除，打卡天数仍在后台累积用于发券判定
+function renderStreakGrid() {}
 
 // 渲染鸡排券解锁状态
 function renderCoupons() {
@@ -1315,10 +1332,21 @@ function openMyRewards() {
                 <div class="reward-item-icon" style="background:#f5f5f5;">${m.icon}</div>
                 <div class="reward-item-info">
                     <div class="reward-item-name">${m.name}</div>
-                    <div class="reward-item-meta">${d === 1 ? '首次碰卡即得' : `还需连续打卡 ${Math.max(0, d - streakDays)} 天`}</div>
+                    <div class="reward-item-meta">${d === 1 ? '首次碰卡即得' : `还需碰卡 ${Math.max(0, d - streakDays)} 次`}</div>
                 </div>
             </div>`;
         }
+    });
+    // 玩游戏兑换的券
+    claimedRewards.filter(r => r.type === 't2c').forEach(r => {
+        streakHTML += `<div class="reward-item claimed">
+            <div class="reward-item-icon claimed">${r.icon}</div>
+            <div class="reward-item-info">
+                <div class="reward-item-name">${r.name}</div>
+                <div class="reward-item-meta">游戏任务兑换 · 次日起可用</div>
+            </div>
+            <span class="reward-item-status claimed">已兑换 ✓</span>
+        </div>`;
     });
     document.getElementById('streakRewardsList').innerHTML = streakHTML;
 
@@ -1425,7 +1453,6 @@ function simulateTap() {
     }
 
     renderAll();
-    renderModalGamePreview();
     openModal('tapModal');
 
     // 券区高亮反馈
@@ -1435,21 +1462,6 @@ function simulateTap() {
         void block.offsetWidth;
         block.classList.add('just-got');
     }
-}
-
-// 渲染弹窗内的游戏道具预览
-function renderModalGamePreview() {
-    const items = [
-        { icon: '⚔️', name: '王者荣耀',   bonus: '钻石×50' },
-        { icon: '🏹', name: '和平精英',   bonus: '服饰币×300' },
-        { icon: '🎯', name: '三角洲行动', bonus: '补给箱×1' }
-    ];
-    document.getElementById('modalGamePreview').innerHTML = items.map(g => `
-        <div class="mgp-item">
-            <div class="mgp-icon">${g.icon}</div>
-            <div class="mgp-name">${g.name}</div>
-            <div class="mgp-bonus">${g.bonus}</div>
-        </div>`).join('');
 }
 
 function claimTapReward() {
@@ -1464,7 +1476,7 @@ function claimTapReward() {
             icon: pendingMilestoneReward.icon,
             claimedAt: timeStr
         });
-        showToast(`🎉 D${pendingMilestoneReward.day} 奖励已发放：${pendingMilestoneReward.name}`);
+        showToast(`🎉 ${pendingMilestoneReward.name} 已到账 · 次日起可用`);
         pendingMilestoneReward = null;
     } else {
         showToast('✅ 碰卡成功，权益已确认！');
@@ -1472,11 +1484,34 @@ function claimTapReward() {
 
     closeModal('tapModal');
     renderAll();
+}
 
-    // 按钮语义为「使用并获得游戏道具」：直接串起用券核销 → 解锁游戏权益
+// ==================== 玩游戏换鸡排券 ====================
+function goT2CTask(id) {
+    const t = TASK2COUPON.find(x => x.id === id);
+    if (!t || t2cTaskDone[id]) return;
+    showToast(`🎮 正在跳转 ${t.game}...`);
     setTimeout(() => {
-        if (!couponUsed) useCoupon();
-    }, 600);
+        t2cTaskDone[id] = true;
+        renderTask2Coupon();
+        showToast(`✅ ${t.task}已完成，可兑换${t.cName}`);
+    }, 1500);
+}
+
+function claimT2C(id) {
+    const t = TASK2COUPON.find(x => x.id === id);
+    if (!t || t2cClaimed[id]) return;
+    t2cClaimed[id] = true;
+    const now = new Date();
+    const timeStr = `${now.getMonth()+1}月${now.getDate()}日 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    claimedRewards.push({
+        type: 't2c', day: 0,
+        name: `正新鸡排 ${t.cVal}${t.cName}`,
+        icon: '🎫', claimedAt: timeStr
+    });
+    showToast(`🎫 ${t.cVal}${t.cName} 已到账 · 次日起可用`);
+    renderTask2Coupon();
+    updateRewardBadge();
 }
 
 // ==================== 商家广告位 ====================

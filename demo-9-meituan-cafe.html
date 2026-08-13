@@ -595,6 +595,33 @@
             background: linear-gradient(135deg, #FFD100, #ff8c00);
             color: #4d3800;
         }
+        /* ===== 弹窗内：游戏道具预览 ===== */
+        .modal-game-preview {
+            margin: 12px 0 14px; padding: 14px 12px;
+            background: linear-gradient(135deg, #fffdf5, #fff8e1);
+            border: 2px solid #FFD100; border-radius: 14px;
+        }
+        .mgp-title {
+            font-size: 13px; font-weight: 900; color: #8d6e00;
+            margin-bottom: 10px; text-align: center;
+        }
+        .mgp-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .mgp-item {
+            background: #fff; border: 1px solid #ffe0b2; border-radius: 10px;
+            padding: 10px 4px; text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .mgp-item .mgp-icon { font-size: 24px; margin-bottom: 4px; }
+        .mgp-item .mgp-name {
+            font-size: 10px; font-weight: 700; color: #666;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .mgp-item .mgp-bonus {
+            font-size: 11px; color: #d84315; font-weight: 900; margin-top: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
         .modal-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(255,140,0,0.35); }
         .modal-btn.secondary {
             background: transparent; color: #999; font-size: 13px; padding: 10px;
@@ -788,7 +815,12 @@
             </div>
         </div>
         <div class="tap-modal-coupon" id="tapModalCoupon">🎁 获得5折美团网费券</div>
-        <button class="modal-btn" onclick="closeModal('tapModal')">前往使用获得游戏权益</button>
+        <button class="modal-btn" onclick="goUseFromModal()">🎁 使用后可获得游戏道具</button>
+        <!-- 使用券可得的游戏道具预览 -->
+        <div class="modal-game-preview">
+            <div class="mgp-title">🎮 可获得以下道具</div>
+            <div class="mgp-grid" id="modalGamePreview"></div>
+        </div>
         <button class="modal-btn secondary" onclick="closeModal('tapModal')">稍后再说</button>
     </div>
 </div>
@@ -940,6 +972,7 @@ function simulateTap() {
     }
 
     renderAll();
+    renderModalGamePreview();
     openModal('tapModal');
 
     // 券区高亮反馈：碰卡后美团券刷新到账
@@ -949,6 +982,29 @@ function simulateTap() {
         void block.offsetWidth;
         block.classList.add('just-got');
     }
+}
+
+// 渲染弹窗内的游戏道具预览
+function renderModalGamePreview() {
+    const items = [
+        { icon: '⚔️', name: '王者荣耀', bonus: '钻石×50' },
+        { icon: '🛡️', name: '英雄联盟', bonus: '特权×100' },
+        { icon: '🔫', name: '无畏契约', bonus: '枪皮×4' }
+    ];
+    document.getElementById('modalGamePreview').innerHTML = items.map(g => `
+        <div class="mgp-item">
+            <div class="mgp-icon">${g.icon}</div>
+            <div class="mgp-name">${g.name}</div>
+            <div class="mgp-bonus">${g.bonus}</div>
+        </div>`).join('');
+}
+
+// 弹窗内点击「使用后可获得游戏道具」→ 关闭弹窗并串起核销流程
+function goUseFromModal() {
+    closeModal('tapModal');
+    setTimeout(() => {
+        if (!meituanUsed) openMeituan();
+    }, 400);
 }
 
 // ==================== 其他交互 ====================
